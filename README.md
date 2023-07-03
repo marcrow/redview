@@ -26,7 +26,7 @@ View markdown file tree in a fancy web interface. Two display mode github like a
 When you run the python script a copy of the project is created in the directory provide in argument (/tmp/redview by default). In this new directory, summary are added at the top of each files and directory summary are created for each directory. In addition html file are created for markmap preview.
 
 ## How it will works (in the future)
-In addition of the current usage, redview cill be able to work on the same directory of the original directory.  
-Update from source file will be done automatically.
-Search based on tags set in yaml at the the top of md files
+In addition of the current usage, redview will be able to work on the same directory of the original directory.   
+Update from source file will be done automatically.  
+Search based on tags set in yaml at the the top of md files.  
 Update your sql from your md note and vice versa.
