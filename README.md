@@ -1,6 +1,13 @@
 # redview
 View markdown file tree in a fancy web interface. Two display mode github like and markmap to have an overview of your files.
 
+1 file / 2 views :  
+1. Viewed in synthetic form, used as a list of tests to be carried out for pentesting.  
+![markmapview](./images/image1.png)  
+2. Markdown view, to have complete information.  
+![mdview](./images/image2.png)  
+Sometimes you have so much data that you're lost because you don't know what's in each file and where to find the information you're looking for. Redview can be the solution :  
+![markmap_tree](./images/image3.png)  
 
 ## Features
 - Create summary at the top of each md file.
