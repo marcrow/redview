@@ -7,12 +7,12 @@ tag:
     #This tag can be renamed
     main:
       - phase:
-          -1 : Autres
-          0 : Ressources
-          1 : Enumeration
-          2 : Gain d'accès / Exploitation
-          3 : Elévation de privilèges
-          4 : Déplacement latéral
+          "-1" : Autres
+          "0" : Ressources
+          "1" : Enumeration
+          "2" : Gain d'accès / Exploitation
+          "3" : Elévation de privilèges
+          "4" : Déplacement latéral
     #Optionnal tags
     isCheatsheet:
     isCourse:

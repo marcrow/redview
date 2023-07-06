@@ -190,6 +190,7 @@ def add_phase_in_content(phases, files_content, cfile, content):
     for tag, title in phases.items():
         tag = int(tag)
         title1 = {title :files_content[0].get(title)}
+        print(title1)
         if cfile not in content[tag]:
             content[tag][cfile]=title1
         else:
@@ -412,7 +413,7 @@ def generate_markmap_readme(spath,dpath):
                 if FORMAT == "markmap":
                     cfile = cfile[:-2] + "html"
                 with open(dpath+cfile, "w") as df:
-                    with open("./ressources/template.html", "r") as tf: 
+                    with open("./export/web/ressources/template.html", "r") as tf: 
                         for line in tf:          
                             df.write(line)
                     df.write(yaml)
@@ -424,7 +425,7 @@ def generate_markmap_readme(spath,dpath):
 
     text = "" 
     if FORMAT == "markmap":
-        with open("./ressources/template.html", "r") as tf: 
+        with open("./export/web/ressources/template.html", "r") as tf: 
             for line in tf:          
                 text = text + line
     fileName = dpath.split("/")
@@ -558,7 +559,7 @@ def generate_readme(spath, dpath):
                     cfile = cfile[:-2] + "html"
                 with open(dpath+cfile, "w") as df:
                     if FORMAT == "markmap":
-                        with open("./ressources/template.html", "r") as tf: 
+                        with open("./export/web/export/web/ressources/template.html", "r") as tf: 
                             for line in tf:          
                                 df.write(line)
                     df.write(yaml)
@@ -587,7 +588,7 @@ def generate_readme(spath, dpath):
 
     text = "" 
     if FORMAT == "markmap":
-        with open("./ressources/template.html", "r") as tf: 
+        with open("./export/web/export/web/ressources/template.html", "r") as tf: 
             for line in tf:          
                 text = text + line
     fileName = dpath.split("/")
