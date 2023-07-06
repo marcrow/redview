@@ -6,13 +6,13 @@ tag:
     #Note tags
     #This tag can be renamed
     main:
-      - phase:
-          "-1" : Autres
-          "0" : Ressources
+      - Phase:
+          "-1" : Others
+          "0" : Resources
           "1" : Enumeration
-          "2" : Gain d'accès / Exploitation
-          "3" : Elévation de privilèges
-          "4" : Déplacement latéral
+          "2" : Exploitation
+          "3" : Privesc
+          "4" : Lateral movement
     #Optionnal tags
     isCheatsheet:
     isCourse:

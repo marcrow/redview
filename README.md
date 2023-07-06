@@ -1,13 +1,17 @@
 # redview
 View markdown file tree in a fancy web interface. Two display mode github like and markmap to have an overview of your files.
 
+
 ## Features
 - Create summary at the top of each md file.
 - Create md summary file in each directory to link md files together.
 - Node JS web server to preview md like in github or you can also add your own style.
-- Search feature on the web server to find specific content in md note.
+- Search feature with search filter on the web server to find specific content in md note.
 - Node JS web server to preview md as a mindmap with markmap.
 - No internet connexion required
+- Format web md preview, markmap, md for obsidian (optimized for graph visualization)
+
++ Configuraiton via yaml and .env file 😊
 
 ## When use Redview
 1. Preview knowledge notes
@@ -21,12 +25,82 @@ View markdown file tree in a fancy web interface. Two display mode github like a
   - Search for specific keyword
 4. View massive md file tree
   - same argument as for note preview knowledge preview.
+
+You may found other use case of this project.
     
 ## How it works
 When you run the python script a copy of the project is created in the directory provide in argument (/tmp/redview by default). In this new directory, summary are added at the top of each files and directory summary are created for each directory. In addition html file are created for markmap preview.
 
 ## How it will works (in the future)
-In addition of the current usage, redview will be able to work on the same directory of the original directory.   
-Update from source file will be done automatically.  
+In addition of the current usage, redview will be able to automatically update modification from the original working directory.   
 Search based on tags set in yaml at the the top of md files.  
-Update your sql from your md note and vice versa.
+Update your sql db from your md note and vice versa.
+
+
+## How to use it
+I provide an example of md structure to help you to test the tool and to provide concrete examples.
+
+### How to start
+#### Requirement
+Install nodejs and python.
+I have to define depandency to install :/
+
+#### Start
+Redview work on every markdown directory tree. 
+In the redview directory :
+```bash
+python redview.py -s <your_md_dir_path>
+```
+
+Then start the nodejs server with :
+```bash
+cd /tmp/redview; node server.js
+```
+
+you can update node package with :
+```bash
+npm init -y; npm install express showdown fs path dotenv; node server.js
+```
+
+### Organize your data
+To have the full power of this tool, you should organized your data. To do this, redview use 2 things : 
+- Link files in the same directory with a directory summary
+- In this summary, put each title of each file in a category defined by a tag. 
+The tag used to categorized titles, is set in the conf.yaml change and can be customized.  
+For the moment it is 'phase'. (But it can be whatever you want, you just have to replace it in config.yaml.)
+This tag shall be below title 1, start with # and be at the beginning of the line end with : and be follow by a key defined in config.yaml. If it's missing, the title will be categorized like the previous one. If the title has no tag and no previous title, it will be categorized with the -1 key, "other" in the case of our configuration.
+
+Example :  
+```markdown
+# Super random title
+#Phase:1  
+Super random text
+```
+
+The use of tag is not required. if it is not used all titles will be categorized as "other".
+
+### How to use web interface
+#### Search
+Search feature is for the moment only accessible from the markdown preview interface. It is used to search occurence of string into your directory tree.
+There are 3 options for the moment :
+```txt
+>title searchString
+```
+Search searchString only in titles.   
+
+```text
+>here searchString
+```
+Search in the directory tree from your position in the markdown preview.  
+
+```text
+>unique searchString
+```
+If found an occurence of searchString in a file return the result and search into the next file.  
+
+### How to pimp the web interface
+In the /export/web/.env file you can change the css for the web page (may you want to switch to light mode), or add restricted files and directory.
+
+
+__document under construction...__
+

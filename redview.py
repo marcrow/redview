@@ -34,7 +34,7 @@ class MarkdownGetter:
             if isinstance(self.mainTags, list):
                 if isinstance(self.mainTags[0], dict):
                     tag = list(self.mainTags[0].keys())[0]
-                    return "#"+tag.lower()
+                    return tag.lower()
                 else:
                     print( "Error : custom tag in main shall be in a dir structure in conf.yaml")
                     exit()
@@ -48,7 +48,7 @@ class MarkdownGetter:
 
     def get_category(self,number):
         categories = {}
-        categories = self.mainTags[0][self.category_keyword.replace("#","")]
+        categories = self.mainTags[0][self.category_keyword]
         return categories[number]
 
     def generate_summary(self, file_path, cfile, phases):
@@ -146,7 +146,6 @@ class MarkdownGetter:
             return "[[#"+header[1:].replace("\n","")+"]]"
         elif self.FORMAT == "markmap":
             #destination = destination.replace(".md", ".html")
-            print("["+text.replace("\n","")+"]("+destination.replace("\n","")+"#"+"".join(header.lower().rstrip().lstrip()).replace(" ","-")+")  ")
             return "["+text.replace("\n","")+"]("+destination.replace("\n","")+"#"+"".join(header.lower().rstrip().lstrip()).replace(" ","-")+")  "
 
 
@@ -183,7 +182,7 @@ class MarkdownGetter:
         return yaml, markdown_text
 
     def get_title_phase(self,line):
-        keyword = self.get_category_keyword()
+        keyword = "#"+self.get_category_keyword()
         phases = []
         if keyword+":" in line.lower() or keyword+":" in line.lower():
                 p = line.replace(" ","").replace("\n","").split(":")[-1]
@@ -217,7 +216,7 @@ class MarkdownGetter:
 
     def extract_phase(self,markdown_text, titles):
         phase = {}
-        keyword = self.get_category_keyword()
+        keyword = "#"+self.get_category_keyword()
         lines = markdown_text.split('\n')
         last_tags = []
         for index, line in enumerate(lines):
@@ -248,7 +247,6 @@ class MarkdownGetter:
                             if phase.get(tag) is None:
                                 phase[tag]=[]
                             phase[tag].append(current_title)
-        print(phase)
         return phase
 
     def extract_titles(self, markdown_text):
@@ -285,7 +283,7 @@ class MarkdownWritter:
             if isinstance(self.mainTags, list):
                 if isinstance(self.mainTags[0], dict):
                     tag = list(self.mainTags[0].keys())[0]
-                    return "#"+tag.lower()
+                    return tag.lower()
                 else:
                     print( "Error : custom tag in main shall be in a dir structure in conf.yaml")
                     exit()
@@ -299,8 +297,16 @@ class MarkdownWritter:
     
     def get_category(self,number):
         categories = {}
-        categories = self.mainTags[0][self.category_keyword.replace("#","")]
+        categories = self.mainTags[0][self.category_keyword]
         return categories[number]
+
+    def get_content_struct(self):
+        content_struct = dict(self.mainTags[0][self.category_keyword])
+        for k in content_struct.keys():
+            content_struct[k]={}
+        return content_struct
+
+
 
     def format_link(self, text, destination, header = ""):
         destination = destination.replace(self.ROOT_DEST,"")
@@ -318,11 +324,12 @@ class MarkdownWritter:
             else:
                 return "["+text.replace("\n","")+"]("+destination.replace("\n","")+"#"+"".join(header.lower().rstrip().lstrip())+")  "
 
+
     def generate_readme(self, markdown_getter):
         markdown_getter.src = clean_end_path(markdown_getter.src)
         self.dest = clean_end_path(self.dest)
         files = markdown_getter.get_files()
-        content={"-1":{},"0":{},"1":{},"2":{},"3":{},"4":{}}
+        content=self.get_content_struct()
         file_list = []
         summary=""
         yaml = ""
@@ -477,7 +484,7 @@ class MarkdownWritter:
     def generate_markmap_readme(self, markdown_getter):
         markdown_getter.src = clean_end_path(markdown_getter.src)
         files = [f for f in listdir(markdown_getter.src) if isfile(join(markdown_getter.src, f))]
-        content={"-1":{},"0":{},"1":{},"2":{},"3":{},"4":{}}
+        content=self.get_content_struct()
         file_list = []
         text_sub_dir = self.create_sub_dir()
         for cfile in files :
@@ -496,7 +503,6 @@ class MarkdownWritter:
                 add_phase_in_content(phases, file_content, ocfile, content)
                 
             if cfile[0] != "." in cfile and cfile.lower() != "readme.md":
-                print(cfile)
                 if cfile[-2:] == "md":
                     if self.FORMAT == "markmap":
                         cfile = cfile[:-2] + "html"
@@ -530,9 +536,6 @@ class MarkdownWritter:
                 text = text + "- ["+f+"]"+"(./"+f+"), \n"
         
         text = self.add_file_in_readme(text,content,self.dest)
-        if "Password_cracking" in self.dest:
-                    print(text)
-                    print(content)
         summaryFilename = ""
         summaryFilename = "index.html"
         with open(self.dest+summaryFilename,'w') as wfile:
@@ -587,7 +590,6 @@ class RedviewGenerator:
         
 
     def generate_doc(self):
-        # print("src : "+src)
         dir = self.get_directories()
         self.markdown_writter.child_dir = dir
         if self.markdown_getter.FORMAT == "markmap":
@@ -638,15 +640,19 @@ def clean_end_path(path):
             return path[:-1]
         return path
 
-
+def extract_yaml_conf(yaml_file):
+    with open(yaml_file, 'r') as file:
+        return yaml.safe_load(file)
 
 
 def getMainTags(yaml_file):
     with open(yaml_file, 'r') as file:
         data = yaml.safe_load(file)
         
-        if 'main' in data['tag']:
+        if 'main' in data.get('tag'):
             main_structure = data['tag']['main']
+            for index, element in enumerate(main_structure) :
+                main_structure[index] = {k.lower(): v for k, v in main_structure[index].items()} # Lower all keys
             return main_structure
         
         return None
