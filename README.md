@@ -1,5 +1,5 @@
 # redview
-View markdown file tree in a fancy web interface. Two display mode github like and markmap to have an overview of your files.
+View markdown file tree in a fancy web interface with two display modes : github like view and markmap mindmap to have an overview of your files.
 
 
 ## Features
