@@ -41,8 +41,6 @@ class MarkdownGetter:
             else:
                 print( "Error : main tag shall be in a list in conf.yaml")
                 exit()
-                #print(list(self.mainTags.keys())[0])
-                #print(self.mainTags[list(self.mainTags.keys())[0]])
         else:
             print("La structure 'main' n'a pas été trouvée dans le fichier YAML.")
 
@@ -189,31 +187,6 @@ class MarkdownGetter:
                 phases = p.split(",")
         return phases
 
-    # def extract_phase(self,markdown_text, titles):
-    #     phase = {}
-    #     keyword = self.get_category_keyword()
-    #     lines = markdown_text.split('\n')
-    #     level1_title = list(titles[0].keys())
-    #     previous_tag = []
-
-    #     for index, line in enumerate(lines):
-    #         if keyword in line.lower() or keyword+"s" in line.lower():
-    #             tags = self.get_title_phase(line)
-    #             previous_line = lines[index - 1].strip().lower()
-    #             match = re.match(r'^(#+)\s+(.*)', previous_line)
-    #             if match:
-    #                 current_title = match.group(2)
-    #                 for title in titles[0].keys():
-    #                     if title.lower() == current_title.lower():
-    #                         for tag in tags:
-    #                             phase[tag]=title
-        
-    #     if len(phase) == 0:
-    #         phase["-1"]=level1_title[0]
-
-    #     print(phase)
-    #     return phase
-
     def extract_phase(self,markdown_text, titles):
         phase = {}
         keyword = "#"+self.get_category_keyword()
@@ -306,7 +279,25 @@ class MarkdownWritter:
             content_struct[k]={}
         return content_struct
 
+    def remove_tag(self, text):
+        text =text.replace("#"+self.category_keyword,"")
+        return text
 
+    def add_associated_files(self, files):
+        text = "# Associated files\n"
+        if self.FORMAT == "markmap":
+            text = "## Associated files\n"
+        for f in files:
+            f = f.replace(" ","-") 
+            if f == "index.html" or f.lower() == "readme.md": 
+                continue
+            line = "- ["+f+"]"+"(./"+f+"), \n"
+            if self.FORMAT=="markmap" and f[-3:] == ".md": # Use to stay on markmap preview if a md file is open
+                if (path.exists(self.dest+f.replace(".md",".html"))):
+                    print(self.dest+f.replace(".md",".html"))
+                    line = "- ["+f+"]"+"(./"+f.replace(".md",".html")+"), \n"
+            text = text + line
+        return text
 
     def format_link(self, text, destination, header = ""):
         destination = destination.replace(self.ROOT_DEST,"")
@@ -360,6 +351,7 @@ class MarkdownWritter:
                                     df.write(line)
                         df.write(yaml)
                         df.write(summary)
+                        markdown_text = self.remove_tag(markdown_text)
                         df.write(markdown_text)
                         # shall be done in parse_markdown_file
                         # with open(markdown_getter.src+ocfile, "r") as sf:
@@ -391,15 +383,13 @@ class MarkdownWritter:
         text =text + "# "+self.dest.split("/")[-2].capitalize()+"\n"           
         #Lien vers les réperoires enfants
         if len(text_sub_dir) != 0:
-            text = text + "\n## Sous Catégories  \n"
+            text = text + "\n## Subcategories \n"
             text = text + text_sub_dir
         if self.FORMAT != "markmap":
-            text = text + "# Phases :  \n"
+            text = text + "# Categories :  \n"
         text = self.add_file_in_readme(text,content,self.dest)
         if self.FORMAT != "markmap":
-            text = text + "# Listes des fichiers associés\n"
-            for f in file_list:
-                text = text + "- ["+f+"]"+"(./"+f+"), \n"
+            text = text + self.add_associated_files(files)
         summaryFilename = ""
         if self.FORMAT == "md":
             summaryFilename = "Readme.md"
@@ -512,6 +502,7 @@ class MarkdownWritter:
                                 df.write(line)
                         df.write(yaml)
                         #df.write(summary)
+                        markdown_text = self.remove_tag(markdown_text)
                         df.write(markdown_text)
                         df.write("</script></div></body></html>")
                 else:
@@ -529,12 +520,8 @@ class MarkdownWritter:
         if len(text_sub_dir) != 0:
             text = text + "\n## Sous Catégories  \n"
             text = text + text_sub_dir
-        text = text + "\n## Files :  \n"
-        for f in file_list:
-            f = f.replace(" ","-")
-            if f != "index.html" or f.lower() != "readme.md":
-                text = text + "- ["+f+"]"+"(./"+f+"), \n"
-        
+        text = text +self.add_associated_files(file_list)
+
         text = self.add_file_in_readme(text,content,self.dest)
         summaryFilename = ""
         summaryFilename = "index.html"
