@@ -12,6 +12,7 @@ import re
 from os.path import isfile, join
 import argparse
 import yaml
+import textwrap
 
 # npm init -y; npm install express showdown fs path dotenv; node server.js
 
@@ -644,15 +645,38 @@ def getMainTags(yaml_file):
         
         return None
 
+        
+
+def redview_title():
+    text ="""
+ _  .-')     ('-.  _ .-') _        (`-.              ('-.    (`\ .-') /`
+( \( -O )  _(  OO)( (  OO) )     _(OO  )_          _(  OO)    `.( OO ),'
+ ,------. (,------.\     .'_ ,--(_/   ,. \ ,-.-') (,------.,--./  .--.  
+ |   /`. ' |  .---',`'--..._)\   \   /(__/ |  |OO) |  .---'|      |  |  
+ |  /  | | |  |    |  |  \  ' \   \ /   /  |  |  \ |  |    |  |   |  |, 
+ |  |_.' |(|  '--. |  |   ' |  \   '   /,  |  |(_/(|  '--. |  |.'.|  |_)
+ |  .  '.' |  .--' |  |   / :   \     /__),|  |_.' |  .--' |         |  
+ |  |\  \  |  `---.|  '--'  /    \   /   (_|  |    |  `---.|   ,'.   |  
+ `--' '--' `------'`-------'      `-'      `--'    `------''--'   '--'  
+
+"""
+    return text
+
+
 # Define argparse
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--verbose", "-v", help="Augmente le niveau de verbosité",
-                        action="store_true")
-    parser.add_argument("--format", "-f", help="Format de sortie optimisée pour : web, obsidian et markmap", choices=["web","md","obsidian","markmap"], default="web", required=False)
+    parser = argparse.ArgumentParser(add_help=False,prog='redview.py',
+      formatter_class=argparse.RawDescriptionHelpFormatter,
+      description=textwrap.dedent(redview_title()))
+    parser.add_argument("--source", "-s", help="Source directory wich contains original md files", required=True)             
     parser.add_argument("--name", "-n", help="Nom du projet, par défaut redview",  default="redview", required=False)
     parser.add_argument("--path", "-p", help="Chemin destination de des notes formatées, par défaut /tmp/",  default="/tmp/", required=False)
-    parser.add_argument("--source", "-s", help="Source directory wich contains original md files", required=True)
+    parser.add_argument("--format", "-f", help="Format de sortie optimisée pour : web, obsidian et markmap", choices=["web","md","obsidian","markmap"], default="web")
+    parser.add_argument("--verbose", "-v", help="Augmente le niveau de verbosité",action="store_true")
+    parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS, 
+                    help='Show this help message and exit.')
+    
+    
     args = parser.parse_args()
 
     FORMAT = args.format
