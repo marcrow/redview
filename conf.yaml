@@ -1,6 +1,6 @@
-exclude:
-    files: [".node",".git"]
-    directories: ["ressources"]
+exclude: #Not implemented yet
+    files: [".git"]
+    directories: [".vscode", "__pycache__", "node"]
 defaultSrc:
 tag:
     #Note tags
@@ -13,7 +13,7 @@ tag:
           "2" : Exploitation
           "3" : Privesc
           "4" : Lateral movement
-    #Optionnal tags
+    #Optionnal tags / Future feature
     isCheatsheet:
     isCourse:
     linkTo:

@@ -3,9 +3,12 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const showdown = require('showdown');
+// import asciidoctor from 'asciidoctor';
+const asciidoctor = require('asciidoctor')
+const Asciidoctor = asciidoctor()
 const app = express();
 require('dotenv').config();
-
+const downdoc = require('downdoc')
 const converter = new showdown.Converter();
 converter.setOption("ghCompatibleHeaderId", true)
 converter.setOption("simplifiedAutoLink", true)
@@ -105,6 +108,34 @@ function getCss() {
     return result;
   }
 
+function processAsciidocFile(filePath, res) {
+  fs.readFile(filePath, 'utf-8', (err, data) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Erreur lors de la lecture du fichier Markdown.');
+    }
+
+    const templatePath = process.env.MD2HTML;
+    fs.readFile(templatePath, 'utf-8', (err, htmldata) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Erreur lors de la lecture du template html');
+      }
+      let asciidocContent = escapeBadChar(data);
+      //const asciidocContent = extractYamlAndMarkdown(data);
+      // const asciidocContent = data;
+      let htmlContent = htmldata;
+      htmlContent = htmlContent.replace("$css", getCss());
+      console.log(Asciidoctor.convert(asciidocContent))
+      htmlContent = htmlContent.replace("$md", Asciidoctor.convert(asciidocContent, {'standalone':true}))
+      htmlContent = retieveBadChar(htmlContent);
+      res.header('Content-Type', 'text/html'); // Spécifier explicitement le type MIME
+      res.send(htmlContent);
+    })
+
+  });
+}
+
 function processMarkdownFile(filePath, res) {
     fs.readFile(filePath, 'utf-8', (err, data) => {
       if (err) {
@@ -131,7 +162,28 @@ function processMarkdownFile(filePath, res) {
   
     });
   }
+
+function asciiToMarkmap(filePath, res){
+  let response = ""
+  fs.readFile(filePath, 'utf-8', (err, data) => {
+    if (err){
+      console.error(err);
+      return res.status(500).send('File not found.');
+    }
+    fs.readFile("ressources/template.html", 'utf-8', (err, template) => {
+    if (err){
+      console.error(err);
+      return res.status(500).send('markmap html template not found');
+    }
+    response = template;
+    response = response +  downdoc(data);
+    response = response + "</script></div><span id='source' hidden='hidden'>.adoc</span></body></html>";
+    res.send(response);
+    })
+  })
   
+}
+
 function validateInput(filePath) {
 doesExist = fs.existsSync(filePath);
 if (doesExist) {
@@ -141,6 +193,7 @@ if (doesExist) {
     }
     return true;
 } else {
+    console.log(filePath)
     return false;
 }
 }
@@ -226,12 +279,14 @@ function otherFilesResponder(req, res){
 const index = (req, res) => {
   const url = decodeURIComponent(req.url);
   let filePath = path.join(process.env.PWD, url);
-  const is_valid = validateInput(filePath);
 
-  if (!is_valid) {
-    console.log("fichier invalide");
-    return res.status(404).send('Fichier introuvable.');
-  }
+  // if (!is_valid) {
+  //   const alternateFilePath = filePath.replace('.html', '.adoc'); 
+  //   if (!validateInput(alternateFilePath)){
+  //     console.log("fichier invalide :(");
+  //     return res.status(404).send('File not found.');
+  //   }
+  // }
 
   const extension = path.extname(filePath);
   if (extension === "") {
@@ -239,11 +294,32 @@ const index = (req, res) => {
     filePath = filePath + "Readme.md";
   }
 
+  const is_valid = validateInput(filePath);
+  if (!is_valid && extension != ".html") { //except html because markmap from adoc is generate in real-time
+      return res.status(404).send('File not found.'+extension);
+  }
+
   if (path.extname(filePath) === ".md") {
     return processMarkdownFile(filePath, res);
   } else if (path.extname(filePath) === ".html") {
-    return res.sendFile(filePath);
-  } else {
+    fs.access(filePath, fs.constants.F_OK, (err) => {
+      if (err){
+        const alternateFilePath = filePath.replace('.html', '.adoc');
+        fs.access(alternateFilePath, fs.constants.F_OK, (err) => {
+          if (err) {
+              return res.status(404).send('File not found.');
+          }else{
+              asciiToMarkmap(alternateFilePath, res);
+          }})
+      } else{
+          return res.sendFile(filePath);
+      }  
+    })
+
+  } else if (path.extname(filePath) == ".adoc") {
+    return processAsciidocFile(filePath,res);
+  }
+  else {
     return otherFilesResponder(req, res);
     //return res.status(404).send("La ressource demandée n'est ni du markdown ni du html");
   }

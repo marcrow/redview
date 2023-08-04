@@ -61,6 +61,10 @@ exports.searchFiles = (req, res) => {
     });
 };
 
+
+
+
+
 function searchInDirectory(directoryPath, searchQuery, searchInTitles, unique) {
   return new Promise((resolve, reject) => {
     fs.readdir(directoryPath, (err, files) => {
@@ -88,76 +92,20 @@ function searchInDirectory(directoryPath, searchQuery, searchInTitles, unique) {
                   resolve();
                 })
                 .catch(error => reject(error));
-            } else if (stats.isFile() && path.extname(file).toLowerCase() === '.md'  &&  path.basename(file).toLocaleLowerCase() != "readme.md") {
-              fs.readFile(filePath, 'utf8', (err, content) => {
-                if (err) {
-                  reject(err);
-                  return;
-                }
-
-                const lines = content.split('\n');
-                let nearTitle = '';
-                let currentTitle = '';
-                let only_title = searchInTitles;
-                let ignore = false; // use to ignore lines 
-                let isYaml = false;
-                let isSummary = false;
-
-                lines.forEach((line, index) => {
-                  line = line.toLowerCase()
-                  if (isYaml){ //used in the future to search by tag
-                    if (line == "---"){ //end of yaml
-                      isYaml = false;
-                      ignore=false;
-                    }
-                  }
-                  if (index < 3 && line == "---" && ! isYaml){ //detect start ofyaml
-                    isYaml = true;
-                    ignore = true;
-                  }
-                  
-                  if (line.includes("__Summary :__ ")){ //ignore content in summary
-                    isSummary = true;
-                    ignore = true;
-                  }
-                  if (line.startsWith('#') && ! line.toLowerCase().startsWith('#phase')) { // other tilte level
-                    nearTitle = line.substring(2).trim();
-                    if (line.startsWith('# ')) { // Title level 1
-                      if (isSummary){ // end of summary
-                        ignore = false;
-                        isSummary = false;
-                      }
-                      currentTitle = nearTitle;
-                    }
-                    if(only_title){
-                      ignore = false;
-                    }
-                  }
-                  else if (only_title){
-                    ignore = true;
-                  }
-                  if (!ignore){
-                    if (line.includes(searchQuery.toLowerCase())) {
-                      if (! line.includes("[") && ! line.includes(")")){
-                        if (unique){
-                          console.log(ignore)
-                          ignore = true;
-                        }
-                        console.log(filePath)
-                        matchingFiles.push({
-                          file: filePath.replace(process.env.PWD,""),
-                          line: index + 1,
-                          content: line.trim().slice(0,130) + "...",
-                          nearTitle,
-                          currentTitle,
-                        });
-                      }
-                    }
-                  }
-                  
-                });
-                resolve();
-              });
+            } else if (stats.isFile() && path.extname(file).toLowerCase() === '.md' && path.basename(file).toLocaleLowerCase() != "readme.md") {
+              searchInMd(filePath, searchQuery, searchInTitles, unique)
+                .then(results => {
+                  matchingFiles.push(...results);
+                  resolve();
+                })
+                .catch(error => reject(error));
+              } else if (stats.isFile() && path.extname(file).toLowerCase() === '.adoc' && path.basename(file).toLocaleLowerCase() != "readme.adoc") {
+                searchInAsciidoc(filePath, searchQuery, searchInTitles, unique)
+                  .then(results => {
+                    matchingFiles.push(...results);
+                    resolve();
+                  })
+                  .catch(error => reject(error));
             } else {
               resolve();
             }
@@ -168,6 +116,139 @@ function searchInDirectory(directoryPath, searchQuery, searchInTitles, unique) {
       Promise.all(promises)
         .then(() => resolve(matchingFiles))
         .catch(error => reject(error));
+    });
+  });
+}
+
+function searchInMd(filePath, searchQuery, searchInTitles, unique) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(filePath, 'utf8', (err, content) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      const lines = content.split('\n');
+      let nearTitle = '';
+      let currentTitle = '';
+      let only_title = searchInTitles;
+      let ignore = false; // used to ignore lines
+      let isYaml = false;
+      let isSummary = false;
+      const matchingLines = [];
+
+      lines.forEach((line, index) => {
+        line = line.toLowerCase();
+        if (isYaml) { // used in the future to search by tag
+          if (line == "---") { // end of yaml
+            isYaml = false;
+            ignore = false;
+          }
+        }
+        if (index < 3 && line == "---" && !isYaml) { // detect start of yaml
+          isYaml = true;
+          ignore = true;
+        }
+
+        if (line.includes("__Summary :__ ")) { // ignore content in summary
+          isSummary = true;
+          ignore = true;
+        }
+        if (line.startsWith('#') && !line.toLowerCase().startsWith('#phase')) { // other title level
+          nearTitle = line.substring(2).trim();
+          if (line.startsWith('# ')) { // Title level 1
+            if (isSummary) { // end of summary
+              ignore = false;
+              isSummary = false;
+            }
+            currentTitle = nearTitle;
+          }
+          if (only_title) {
+            ignore = false;
+          }
+        } else if (only_title) {
+          ignore = true;
+        }
+        if (!ignore) {
+          if (line.includes(searchQuery.toLowerCase())) {
+            if (!line.includes("[") && !line.includes(")")) {
+              if (unique) {
+                ignore = true;
+              }
+              matchingLines.push({
+                file: filePath.replace(process.env.PWD, ""),
+                line: index + 1,
+                content: line.trim().slice(0, 130) + "...",
+                nearTitle,
+                currentTitle,
+              });
+            }
+          }
+        }
+      });
+      resolve(matchingLines);
+    });
+  });
+}
+
+function searchInAsciidoc(filePath, searchQuery, searchInTitles, unique) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(filePath, 'utf8', (err, content) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      const lines = content.split('\n');
+      let nearTitle = '';
+      let currentTitle = '';
+      let only_title = searchInTitles;
+      let ignore = false; // used to ignore lines
+      let isYaml = false;
+      let isSummary = false;
+      const matchingLines = [];
+
+      lines.forEach((line, index) => {
+        line = line.toLowerCase();
+        //no yaml in asciidoc
+
+        if (line.includes("__Summary :__ ")) { // ignore content in summary
+          isSummary = true;
+          ignore = true;
+        }
+        if (line.startsWith('=') && !line.toLowerCase().startsWith('#phase')) { // other title level
+          nearTitle = line.substring(2).trim();
+          if (line.startsWith('= ')) { // Title level 1
+            if (isSummary) { // end of summary
+              ignore = false;
+              isSummary = false;
+            }
+            currentTitle = nearTitle;
+          }
+          if (only_title) {
+            ignore = false;
+          }
+        } else if (only_title) {
+          ignore = true;
+        }
+        if (!ignore) {
+          if (line.includes(searchQuery.toLowerCase())) {
+            if (!line.includes("[") && !line.includes(")")) {
+              if (unique) {
+                ignore = true;
+              }
+              matchingLines.push({
+                file: filePath.replace(process.env.PWD, ""),
+                line: index + 1,
+                content: line.trim().slice(0, 130) + "...",
+                nearTitle,
+                currentTitle,
+              });
+            }
+          }
+        }
+      });
+      resolve(matchingLines);
     });
   });
 }

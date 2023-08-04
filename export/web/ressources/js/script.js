@@ -25,6 +25,15 @@ function goBack(){
   }
 }
 
+function getSourceType() {
+  const stypeElement = document.getElementById("source");
+  stype= stypeElement.textContent;
+  if (stype == ".adoc" || stype == ".md"){
+    return stype;
+  }
+  return '.md';
+}
+
 //--------------Markmap page------------------
 //--------iframe for md
 
@@ -49,8 +58,8 @@ function toggleIframe(evt) {
     // Obtention de l'URL courante
     var currentUrl = window.location.href;
 
-    // Modification de l'URL pour utiliser le port 1818 et le type de fichier .md
-    var newUrl = currentUrl.replace("index.html","").replace(".html", ".md");
+    // Modification de l'URL pour utiliser le type de fichier .md
+    var newUrl = currentUrl.replace("index.html","").replace(".html", getSourceType());
 
     // Création de l'élément iframe
     iframe = document.createElement("iframe");
@@ -102,7 +111,7 @@ function goPreview(){
   if (currentPage == "index.html" || currentPage == null ){
     target = target + "/";
   } else {
-    target = pathname.replace(".html",".md");
+    target = pathname.replace(".html", getSourceType());
   }
   console.log(pathname)
   window.location.href = target
@@ -129,8 +138,8 @@ function openInNewTab() {
   // Obtention de l'URL courante
   var currentUrl = window.location.href;
 
-  // Modification de l'URL pour utiliser le port 8080 et l'extension du fichier .md
-  var newUrl = currentUrl.replace("index.html","").replace(".html", ".md");
+  // Modification de l'URL pour utilisert l'extension du fichier .md
+  var newUrl = currentUrl.replace("index.html","").replace(".html",  getSourceType());
 
   // Ouverture de la nouvelle page dans un nouvel onglet
   window.open(newUrl, "_blank");
@@ -220,6 +229,7 @@ function goMindmap(){
     target = target + "/index.html"
   } else {
     target = pathname.replace(".md",".html");
+    target = pathname.replace(".adoc",".html");
   }
   console.log(pathname)
   window.location.href = target
