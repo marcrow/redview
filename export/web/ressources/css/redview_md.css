@@ -1,7 +1,7 @@
 * {
 	margin: 0;
 	padding: 0;
-	/* list-style-type: none; */
+	list-style-type: none;
 }
 
 /* menu section */
@@ -17,10 +17,6 @@ header{
     align-items: center;
 }
 
-
-header li {
-  list-style-type: none;
-}
 .menu {
 list-style-type: none;
 }
@@ -28,7 +24,6 @@ list-style-type: none;
 article{
   padding-top: 70px;
 }
-
 
 .center-menu p{
   margin-bottom: 5px;
@@ -425,169 +420,15 @@ https://uiverse.io/Prince4fff/slippery-baboon-37
 /* card end */
 /* search result end*/
 
-/* Custom css for array */
-table {
-  margin: auto;
-  color:white;
+/*-------Result display--------------*/
+/* Array to the right if closed */
+details summary::after {
+  content: '\25B6'; 
+  padding-left: 0.5rem;
 }
 
-.tableblock{
-  font-family: Arial, Helvetica, sans-serif;
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.tableblock td, .tableblock th {
-  border: 1px solid #ddd;
-  padding: 8px;
-}
-
-.tableblock tr:nth-child(even){background-color: #f2f2f2 ;}
-
-.tableblock tr:hover {
-  background-color: #d9d6d68e !important;
-  color: black}
-
-.tableblock th {
-  padding-top: 12px;
-  padding-bottom: 12px;
-  text-align: left;
-  background-color: #eb6951;
-  color: white;
-}
-
-
-
-
-
-.admonitionblock {
-  padding: 9 5% 25 5%;
-}
-
- .admonitionblock>table td.icon {
-  text-align: center;
-  width: 120px;
-}
-
-.admonitionblock>table {
-  /* border-collapse: separate !important; */
-  background: none;
-  display: table;
-  width: 100% !important;
-  box-shadow: 5px 3px 1px 0.5px #6d6767;
-}
-
-.admonitionblock>table td{
-  padding: 25px 0 25px 0;
-  border: 0 ; 
-
-}
-
-.admonitionblock .content{
-  font: italic 1.1em "Segoe UI", serif;
-  color:#111113;
-}
-
-.admonitionblock>table tr{
-  /* border: 0 !important; */
-  background: #f8f8f6;
-  border-radius: 20px !important;
-}
-
-
-.admonitionblock>table td.icon .title {
-  font-weight: bold;
-  font-family: "Open Sans","DejaVu Sans",sans-serif;
-  text-transform: uppercase;
-}
-
-.warning>table tr{
-  border-left: 1mm solid #d21309 !important;
-}
-
-.warning>table td.icon .title {
-  color: #d21309;
-}
-
-
-.note>table tr{
-  border-left: 1mm solid #0aa4dc !important;
-}
-
-.note>table td.icon .title {
-  color: #0aa4dc;
-}
-
-
-.tip>table tr{
-  border-left: 1mm solid #09d31a !important;
-}
-
-.tip>table td.icon .title {
-  color: #09d31a;
-}
-
-.important>table tr{
-  border-left: 1mm solid #110adc !important;
-}
-
-.important>table td.icon .title {
-  color: #110adc;
-}
-
-.caution>table tr{
-  border-left: 1mm solid #d26d09 !important;
-}
-
-.caution>table td.icon .title {
-  color: #d26d09;
-}
-
-.hdlist>table {
-  background: none;
-  display: table;
-  width: 100% !important;
-}
-
-.hdlist>table .hdlist1{
-  font: small-caps bold 20px/1 serif;
-}
-
-.hdlist>table .hdlist2{
-  font: Georgia, serif;
-}
-
-a.red{
-  color: red !important;
-}
-
-a.green{
-  color: green !important;
-}
-
-a.white{
-  color: white !important;
-}
-
-a.blue{
-  color: blue !important;
-}
-
-a.yellow{
-  color: yellow !important;
-}
-
-.sidebarblock{
-  background-color: #fffecbf0;
-  border-radius: 7px;
-  color: #151515;
-  margin-bottom: 15px;
-  padding: 20px;
-}
-
-div.sidebarblock .title:first-child{
-  display: flex;
-  justify-content: center;
-  font-size: 1.5em;
-  padding-bottom: 10px;
+/* Array to the right if open */
+details[open] summary::after {
+  content: '\25BC'; 
+  padding-left: 0.5rem;
 }
