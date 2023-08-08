@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+# Test
 from os import mkdir
 from os import rmdir
 from os import path
@@ -13,21 +13,26 @@ from os.path import isfile, join
 import argparse
 import textwrap
 from src.utils import *
-from src.md_redview import MarkdownGetter
-from src.md_redview import MarkdownWritter
+from src.dir_processor import Directory_Processor
 
 class RedviewGenerator:
     def __init__(self, FORMAT : str, src : str, dest : str, script_dir : str, dir_to_exclude : list, mainTags : list):
+        self.FORMAT = FORMAT
+        self.src = src 
+        self.dest = dest
+        self.ROOT_DEST = dest
         self.script_dir = script_dir
         self.dir_to_exclude = dir_to_exclude
-        self.markdown_getter = MarkdownGetter(FORMAT, src , dir_to_exclude , mainTags, path.dirname(path.realpath(__file__))) 
-        self.markdown_writter = MarkdownWritter(FORMAT, dest, mainTags, self.get_directories(), path.dirname(path.realpath(__file__)))
+        self.mainTags = mainTags
+        self.real_path = path.dirname(path.realpath(__file__))
+
+
         if FORMAT == "web" or "markmap" or "md":
             self.export_web()
 
     def export_web(self):
         source_directory = self.script_dir + "/export/web/"
-        destination_directory = self.markdown_writter.ROOT_DEST
+        destination_directory = self.ROOT_DEST
 
         # Copie les fichiers du répertoire source vers le répertoire de destination
         for root, dirs, files in walk(source_directory):
@@ -46,7 +51,7 @@ class RedviewGenerator:
 
 
     def get_directories(self):
-        directories = [f for f in listdir(self.markdown_getter.src) if not isfile(join(self.markdown_getter.src, f)) and not f in self.dir_to_exclude]
+        directories = [f for f in listdir(self.src) if not isfile(join(self.src, f)) and not f in self.dir_to_exclude]
         return [item  for item in directories if not (item.startswith("."))]
     
     @staticmethod
@@ -58,22 +63,18 @@ class RedviewGenerator:
         return path
 
     def goto_parent_dir(self):
-        self.markdown_getter.src =  RedviewGenerator.last_slash_index(self.markdown_getter.src)
-        self.markdown_writter.dest = RedviewGenerator.last_slash_index(self.markdown_writter.dest)
+        self.src =  RedviewGenerator.last_slash_index(self.src)
+        self.dest = RedviewGenerator.last_slash_index(self.dest)
            # self.markdown_getter.src = self.markdown_getter.src[:self.markdown_getter.src.rfind("/")]
-        
-        
+
 
     def generate_doc(self):
         dir = self.get_directories()
-        self.markdown_writter.child_dir = dir
-        if self.markdown_getter.FORMAT == "markmap":
-            self.markdown_writter.generate_markmap_readme(self.markdown_getter)
-        else :
-            self.markdown_writter.generate_readme(self.markdown_getter)
+        dir_processor = Directory_Processor(self.FORMAT, self.src, self.dest, self.ROOT_DEST, self.script_dir, dir ,self.dir_to_exclude, self.mainTags, self.real_path)
+        dir_processor.generate_readme()
         for directory in dir:
-            self.markdown_getter.src = clean_end_path(self.markdown_getter.src+"/"+directory)
-            self.markdown_writter.dest = clean_end_path(self.markdown_writter.dest+"/"+directory.replace(" ","_"))
+            self.src = clean_end_path(self.src+"/"+directory)
+            self.dest = clean_end_path(self.dest+"/"+directory.replace(" ","_"))
             # dir_markdown_getter = MarkdownGetter(markdown_getter.FORMAT, markdown_getter.src+"/"+directory, markdown_getter.dest+"/"+directory, markdown_getter.dir_to_exclude, markdown_getter.mainTags) 
             # dir_markdown_writter = MarkdownWritter(markdown_writter.FORMAT, markdown_writter.dest+"/"+directory,  markdown_writter.mainTags)
             #generate_doc(dir_markdown_getter, markdown_writter)
@@ -157,11 +158,9 @@ def main():
     # markdown_getter = MarkdownGetter(FORMAT, src, dest , dir_to_exclude , mainTags) 
     # markdown_writter = MarkdownWritter(FORMAT, dest, mainTags)
     if FORMAT == "web":
-        redview.markdown_getter.FORMAT = "markmap"
-        redview.markdown_writter.FORMAT = "markmap"
+        redview.FORMAT = "markmap"
         redview.generate_doc()
-        redview.markdown_getter.FORMAT = "md"
-        redview.markdown_writter.FORMAT = "md"
+        redview = RedviewGenerator("md", src, dest, script_dir, dir_to_exclude, mainTags)
     redview.generate_doc()
 
 if __name__ == '__main__':

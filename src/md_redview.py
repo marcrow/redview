@@ -20,6 +20,7 @@ from src.utils import *
 class MarkdownGetter:
     def __init__(self, FORMAT : str, src : str, dir_to_exclude : list, mainTags : list, realpath : str):
         self.FORMAT = FORMAT
+        self.src = clean_end_path(src)
         self.src = src
         self.dir_to_exclude = dir_to_exclude
         self.mainTags = mainTags
@@ -113,9 +114,7 @@ class MarkdownGetter:
                     result = result + title_level*"\t" + "- "+ str(title_level +1 ) +". " +self.internal_link(title.replace("#", ""), cfile, title.replace("#", "")) + "\n"
                 result = result + self.render_summary(subtitles, title_level + 1, cfile)
         return result
-    
-    def get_files(self):
-        return [f for f in listdir(self.src) if isfile(join(self.src, f))]
+
 
     def get_directories(self):
         directories = [f for f in listdir(self.src) if not isfile(join(self.src, f))]
@@ -243,12 +242,11 @@ class MarkdownGetter:
         return titles
 
 class MarkdownWritter:
-    def __init__(self, FORMAT : str, dest : str, mainTags : list, child_dir : list, realpath : str):
+    def __init__(self, FORMAT : str, dest : str, ROOT_DEST  : str,  mainTags : list, realpath : str):
         self.FORMAT = FORMAT
         self.ROOT_DEST = dest
-        self.dest = dest
+        self.dest = clean_end_path(dest)
         self.mainTags = mainTags
-        self.child_dir = child_dir
         self.category_keyword = self.get_category_keyword()
         self.realpath = realpath
         
@@ -278,215 +276,13 @@ class MarkdownWritter:
         categories = {}
         categories = self.mainTags[0][self.category_keyword]
         return categories[number]
-
-    def get_content_struct(self):
-        content_struct = dict(self.mainTags[0][self.category_keyword])
-        for k in content_struct.keys():
-            content_struct[k]={}
-        return content_struct
     
     def cloneAsciiWritter(self):
-        return AsciidocWritter(self.FORMAT, self.dest, self.mainTags, self.child_dir, self.realpath)
+        return AsciidocWritter(self.FORMAT, self.dest, self.mainTags, self.realpath)
 
     def remove_tag(self, text):
         text =text.replace("#"+self.category_keyword,"")
         return text
-
-    def add_associated_files(self, files):
-        text = "# Associated files\n"
-        if self.FORMAT == "markmap":
-            text = "## Associated files\n"
-        for f in files:
-            f = f.replace(" ","-") 
-            if f == "index.html" or f.lower() == "readme.md": 
-                continue
-            line = "- ["+f+"]"+"(./"+f+"), \n"
-            if self.FORMAT=="markmap" and f[-3:] == ".md": # Use to stay on markmap preview if a md file is open
-                if (path.exists(self.dest+f.replace(".md",".html"))):
-                    # print(self.dest+f.replace(".md",".html"))
-                    line = "- ["+f+"]"+"(./"+f.replace(".md",".html")+"), \n"
-                if (path.exists(self.dest+f.replace(".adoc",".html"))):
-                    # print(self.dest+f.replace(".md",".html"))
-                    line = "- ["+f+"]"+"(./"+f.replace(".adoc",".html")+"), \n"
-            text = text + line
-        return text
-
-    def format_link(self, text, destination, header = ""):
-        destination = destination.replace(self.ROOT_DEST,"")
-        destination = destination.replace(" ","-")
-        if len(header) == 0:
-            return "["+text.replace("_"," ").replace("\n","")+"]("+destination.replace("\n","")+")  "
-        else:
-            if self.FORMAT == "md":
-                return "["+text.replace("\n","")+"]("+destination.replace("\n","")+"#"+replace_fr_char("".join(header.lower().rstrip().lstrip()).replace(" ","-").replace("(","").replace(")",""))+")  "
-            elif self.FORMAT == "obsidian":
-                return "[["+destination.replace("\n","")+"#"+header.replace("\n","")+"]]"
-            if self.FORMAT == "markmap":
-                destination = destination.replace(".md", ".html")
-                destination = destination.replace(".adoc", ".html")
-                return "["+text.replace("\n","")+"]("+destination.replace("\n","")+"#"+"".join(header.lower().rstrip().lstrip()).replace(" ","-")+")  "
-            else:
-                return "["+text.replace("\n","")+"]("+destination.replace("\n","")+"#"+"".join(header.lower().rstrip().lstrip())+")  "
-
-
-    def generate_readme(self, markdown_getter):
-        markdown_getter.src = clean_end_path(markdown_getter.src)
-        self.dest = clean_end_path(self.dest)
-        files = markdown_getter.get_files()
-        content=self.get_content_struct()
-        file_list = []
-        summary=""
-        yaml = ""
-        markdown_text = ""
-        text_sub_dir = self.create_sub_dir()
-        for cfile in files :
-            if cfile[-3:] == ".md" and cfile.lower() != "readme.md":
-                self.process_markdown_file(cfile, content, markdown_getter)
-            if cfile[-5:] == ".adoc" and cfile.lower() != "readme.adoc":
-                asciidocGetter = markdown_getter.cloneAsciiGetter()
-                asciidocWritter = self.cloneAsciiWritter()
-                asciidocWritter.process_asciidoc_file(cfile, content, asciidocGetter)
-            
-            file_list.append(cfile)
-
-        text = "" 
-        if self.FORMAT == "markmap":
-            with open(self.realpath+"/export/web/ressources/template.html", "r") as tf: 
-                for line in tf:          
-                    text = text + line
-        fileName = self.dest.split("/")
-        text =text + "# "+self.dest.split("/")[-2].capitalize()+"\n"           
-        #Lien vers les réperoires enfants
-        if len(text_sub_dir) != 0:
-            text = text + "\n## Subcategories \n"
-            text = text + text_sub_dir
-        if self.FORMAT != "markmap":
-            text = text + "# Categories :  \n"
-        text = self.add_file_in_readme(text,content,self.dest)
-        if self.FORMAT != "markmap":
-            text = text + self.add_associated_files(files)
-        summaryFilename = ""
-        if self.FORMAT == "md":
-            summaryFilename = "Readme.md"
-        elif self.FORMAT == "markmap":
-            summaryFilename = "index.html"
-        else:
-            if self.dest[-1]=="/":
-                summaryFilename = self.dest.split("/")[-2] + ".md"
-            else:
-                summaryFilename = self.dest.split("/")[-1] + ".md"
-        with open(self.dest+summaryFilename,'w') as wfile:
-            wfile.write(text)
-
-    
-    def add_file_in_readme(self, text, content, dpath, level=0):
-        # print(content)
-        icon_title = "📕 "
-        icon_chapter = "🔖 "
-        icon_phase = "📑 "
-        if self.FORMAT == "markmap":
-            icon_title = ""
-            icon_chapter = ""
-            icon_phase = ""
-        if isinstance(content,dict):
-            for k,v in content.items():
-                #Phase
-                if level == 0:
-                    h = "##"
-                    if len(v) > 0:
-                        text= text +h+" "+icon_phase+" "+ self.get_category(k) +"  \n"
-                    #Files
-                    for elt in v:
-                        #For obsidian usage, test relative path
-                        #text = add_file_in_readme(text, content[k][elt],  dpath+"/"+elt, level)
-                        text = self.add_file_in_readme(text, content[k][elt],  "./"+elt, level +1)
-                else:
-                    #h1 and h2
-                    tlevel = level-2
-                    h= ""
-                    if level == 1:
-                        h = "### "+icon_title
-                    else:
-                        h = "\t"*tlevel
-                        h = h +"- "+icon_chapter
-                    
-                    text= text +h+ self.format_link(k,dpath,k) +"  \n"
-                    for elt in v:
-                        text = self.add_file_in_readme(text, elt,  dpath, level+1)
-        else: 
-            #h3 
-            tlevel = level-2
-            h = "\t"*tlevel
-            h = h +"-"
-            if isinstance(content, str):
-                text= text +h+" "+icon_chapter+ self.format_link(content,dpath,content) +"  \n"
-            else:
-                for elt in content:
-                    if isinstance(elt, dict):
-                        text = self.add_file_in_readme(text, elt,  dpath, level+1)
-                    else:
-                        text= text +h+" "+icon_chapter+ self.format_link(elt,dpath,elt) +"  \n"
-        return text
-
-    # Create subdirectories based on child_dir from self().
-    # Return text with links to all subdirectories
-    def create_sub_dir(self):
-        text = ""
-        for directory in self.child_dir:
-            directory = directory.replace(" ","_")
-            if not path.exists(self.dest+directory):
-                mkdir(self.dest+directory)
-            # title = "["+Directory+"]("+path+directory+"/)"
-            if self.FORMAT == "markmap":
-                text = text + "- " + self.format_link(directory,"./"+directory+"/index.html")+"  \n"
-            elif self.FORMAT == "md":
-                text = text + "- 📁 " + self.format_link(directory,self.dest+directory+"/")+"  \n"
-            elif self.FORMAT == "obsidian":
-                text = text + "- " + self.format_link(directory,"./"+directory+"/"+directory+".md") + "  \n"
-            
-        return text
-
-    def generate_markmap_readme(self, markdown_getter):
-        markdown_getter.src = clean_end_path(markdown_getter.src)
-        files = [f for f in listdir(markdown_getter.src) if isfile(join(markdown_getter.src, f))]
-        content=self.get_content_struct()
-        file_list = []
-        text_sub_dir = self.create_sub_dir()
-        for cfile in files :
-            if cfile[-3:] == ".md" and cfile.lower() != "readme.md":
-                self.process_markdown_file(cfile, content, markdown_getter)
-            if cfile[-5:] == ".adoc" and cfile.lower() != "readme.adoc":
-                asciidocGetter = markdown_getter.cloneAsciiGetter()
-                asciidocWritter = self.cloneAsciiWritter()
-                asciidocWritter.process_asciidoc_file(cfile, content, asciidocGetter)
-            else:
-                self.copy_other_file(cfile, markdown_getter.src, self.dest)
-            
-            file_list.append(cfile)
-        text = "" 
-        if self.FORMAT == "markmap":
-            with open(self.realpath +"/export/web/ressources/template.html", "r") as tf: 
-                for line in tf:          
-                    text = text + line
-        fileName = self.dest.split("/")
-        text =text + "# "+self.dest.split("/")[-2].capitalize()+"\n"           
-        #text = text + "\n # Sous Catégories  \n"
-        #Lien vers les réperoires enfants
-        if len(text_sub_dir) != 0:
-            text = text + "\n## Sous Catégories  \n"
-            text = text + text_sub_dir
-        text = text +self.add_associated_files(file_list)
-
-        text = self.add_file_in_readme(text,content,self.dest)
-        summaryFilename = ""
-        summaryFilename = "index.html"
-        with open(self.dest+summaryFilename,'w') as wfile:
-            wfile.write(text)
-
-    def copy_other_file(self,cfile, src, dest):
-        ocfile = cfile
-        cfile = cfile.replace(" ", "-")
-        shutil.copy(src+ocfile, dest+cfile)
 
     
     def process_markdown_file(self, cfile, content, markdown_getter):
@@ -504,21 +300,18 @@ class MarkdownWritter:
         phases = markdown_getter.extract_phase(markdown_text, file_content)
         add_phase_in_content(phases, file_content, ocfile, content)
 
-        if cfile != ".env" :
-            if cfile[-2:] == "md": #generate markmap file
+        if cfile[-2:] == "md": #generate markmap file
+            if self.FORMAT == "markmap":
+                cfile = cfile[:-2] + "html"
+            with open(self.dest+cfile, "w") as df:
                 if self.FORMAT == "markmap":
-                    cfile = cfile[:-2] + "html"
-                with open(self.dest+cfile, "w") as df:
-                    if self.FORMAT == "markmap":
-                        with open(self.realpath+"/export/web/ressources/template.html", "r") as tf: 
-                            for line in tf:          
-                                df.write(line)
-                    df.write(yaml)
-                    if self.FORMAT != "markmap":
-                        df.write(summary)
-                    markdown_text = self.remove_tag(markdown_text)
-                    df.write(markdown_text)
-                    if self.FORMAT == "markmap":
-                        df.write("</script></div><span id='source' hidden='hidden'>.md</span></body></html>")
-            else:
-                shutil.copy(markdown_getter.src+ocfile, self.dest+cfile)
+                    with open(self.realpath+"/export/web/ressources/template.html", "r") as tf: 
+                        for line in tf:          
+                            df.write(line)
+                df.write(yaml)
+                if self.FORMAT != "markmap":
+                    df.write(summary)
+                markdown_text = self.remove_tag(markdown_text)
+                df.write(markdown_text)
+                if self.FORMAT == "markmap":
+                    df.write("</script></div><span id='source' hidden='hidden'>.md</span></body></html>")

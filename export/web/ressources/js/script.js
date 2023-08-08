@@ -50,7 +50,7 @@ function toggleIframe(evt) {
     var currentUrl = window.location.href;
 
     // Modification de l'URL pour utiliser le port 1818 et le type de fichier .md
-    var newUrl = currentUrl.replace("index.html","").replace(".html", ".md");
+    var newUrl = getSourceTarget();
 
     // Création de l'élément iframe
     iframe = document.createElement("iframe");
@@ -92,20 +92,31 @@ function toggleIframe(evt) {
   }
 }
 
-function goPreview(){
+// Get source file from markmap view
+function getSourceTarget(){
   const pathname = window.location.pathname;
   var target = pathname.substring(0, pathname.lastIndexOf('/'));
   const currentPage = pathname.split("/").pop();
-  if (window.self !== window.top){
+  if (window.self !== window.top){ // for iframe
     window.parent.document.body.removeChild(window.frameElement);
   }
-  if (currentPage == "index.html" || currentPage == null ){
+  else if (currentPage == "index.html" || currentPage == null ){
     target = target + "/";
   } else {
-    target = pathname.replace(".html",".md");
+    source = document.getElementById("source").innerText;
+    if (source == ".adoc"){
+      target = pathname.replace(".html",".adoc");
+    }
+    else {
+      target = pathname.replace(".html",".md");
+    }
   }
-  console.log(pathname)
-  window.location.href = target
+  return target;
+}
+
+function goPreview(){
+  target = getSourceTarget();
+  window.location.href = target;
 }
 
 // Fonction pour passer en mode plein écran
@@ -126,11 +137,9 @@ function toggleFullscreen() {
 }
 
 function openInNewTab() {
-  // Obtention de l'URL courante
-  var currentUrl = window.location.href;
-
-  // Modification de l'URL pour utiliser le port 8080 et l'extension du fichier .md
-  var newUrl = currentUrl.replace("index.html","").replace(".html", ".md");
+  // Get the url of the file used to generate the current markmap
+  var newUrl = getSourceTarget();
+  console.log(newUrl)
 
   // Ouverture de la nouvelle page dans un nouvel onglet
   window.open(newUrl, "_blank");
@@ -220,6 +229,7 @@ function goMindmap(){
     target = target + "/index.html"
   } else {
     target = pathname.replace(".md",".html");
+    target = pathname.replace(".adoc",".html");
   }
   console.log(pathname)
   window.location.href = target

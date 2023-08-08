@@ -68,8 +68,6 @@ class AsciidocGetter:
                 result = result + self.render_summary(subtitles, title_level + 1, cfile)
         return result
     
-    def get_files(self):
-        return [f for f in listdir(self.src) if isfile(join(self.src, f))]
 
     def get_directories(self):
         directories = [f for f in listdir(self.src) if not isfile(join(self.src, f))]
@@ -208,12 +206,11 @@ class AsciidocGetter:
         return titles
 
 class AsciidocWritter:
-    def __init__(self, FORMAT : str, dest : str, mainTags : list, child_dir : list, realpath : str):
+    def __init__(self, FORMAT : str, dest : str, ROOT_DEST : str, mainTags : list, realpath : str):
         self.FORMAT = FORMAT
         self.ROOT_DEST = dest
         self.dest = dest
         self.mainTags = mainTags
-        self.child_dir = child_dir
         self.category_keyword = self.get_category_keyword()
         self.realpath = realpath
         
