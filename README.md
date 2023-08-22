@@ -44,7 +44,10 @@ I provide an example of md structure to help you to test the tool and to provide
 
 ### How to start
 #### Requirement
-Install nodejs and python.
+Install nodejs, npm and python.
+```bash
+sudo apt install node python3 npm
+```
 I have to define depandency to install :/
 
 #### Start
@@ -65,7 +68,7 @@ cd /tmp/redview; node server.js
 
 you can update node package with :
 ```bash
-npm init -y; npm install express showdown fs path dotenv; node server.js
+cd /tmp/redview; npm init -y; npm install express showdown fs path dotenv asciidoctor downdoc ; npm audit fix --force ; node server.js
 ```
 
 ### Organize your data
