@@ -4,6 +4,39 @@
 	/* list-style-type: none; */
 }
 
+/* table */
+
+table.tableblock {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+table.tableblock thead tr{
+  background-color: #c26712;
+  color: white;
+
+}
+
+table.tableblock tbody tr {
+  background-color: #f5f5f5;
+
+}
+
+table.tableblock tbody tr:nth-child(2n) {
+  background-color: #e0ded6;
+}
+
+table.tableblock th {
+  border: 1px solid white !important;
+
+}
+
+table.tableblock td {
+border: 1px solid white !important; 
+}
+
+/*end table */
+
 /* menu section */
 header{
     position: fixed; 
@@ -422,24 +455,14 @@ https://uiverse.io/Prince4fff/slippery-baboon-37
 
 /* Custom Asciidoc css */
 /*-------Result display--------------*/
-/* Array to the right if closed */
-details summary::after {
-  content: '\25B6'; 
-  padding-left: 0.5rem;
-}
 
-/* Array to the right if open */
-details[open] summary::after {
-  content: '\25BC'; 
-  padding-left: 0.5rem;
-}
 
 
 /* Admonition css */
 .admonitionblock > table { border: 0; background: none; width: 100%; }
 .admonitionblock > table td.icon img { max-width: none; }
 .admonitionblock > table td.icon .title { font-weight: bold; text-transform: uppercase; }
-.admonitionblock > table td.content { padding-left: 1.125em; padding-right: 1.25em; border: none; border-left: 1px solid #dddddd; color: #ffffff; }
+.admonitionblock > table td.content { padding-left: 1.125em; padding-right: 1.25em; border: none; border-left: 3px solid #dddddd; color: #ffffff; }
 .admonitionblock > table td.content > :last-child > :last-child { margin-bottom: 0; }
 
 
@@ -494,17 +517,43 @@ background-color: white;
   content: attr(title);
   filter: invert(100%);
   font-style: normal;
-  font-weight: var(--admonition-label-font-weight);
   margin: 3.0em;
   padding: 0 .5em;
   text-transform: uppercase;
 }
 .admonitionblock .content {
   word-wrap: anywhere;
-  background: var(--admonition-background);
   padding: 2rem 3rem .75rem;
   width: 100%;
 
 }
 
 /* end of administion css */
+
+/* sidebar css */
+.sidebarblock {
+  background: #e1e1e1;
+  border-radius: .75rem;
+  padding: .75rem 1.5rem;
+  color: black
+}
+
+.sidebarblock > .content > .title {
+  text-align: center;
+  font-size: 30px;
+}
+
+.sidebarblock .admonitionblock table td.content { padding-left: 1.125em; padding-right: 1.25em; border: none; border-left: 3px solid #000000; color: #000000; }
+
+.sidebarblock .admonitionblock table tr {
+  background-color: transparent !important; /* Remove background color */
+}
+
+.sidebarblock .admonitionblock table td.content {
+  color: black;
+}
+
+.sidebarblock .admonitionblock table td{
+  border: none;
+}
+
