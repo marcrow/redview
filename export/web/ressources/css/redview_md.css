@@ -1,7 +1,7 @@
 * {
 	margin: 0;
 	padding: 0;
-	list-style-type: none;
+	/* list-style-type: none; */
 }
 
 /* menu section */
@@ -17,9 +17,6 @@ header{
     align-items: center;
 }
 
-.menu {
-list-style-type: none;
-}
 
 article{
   padding-top: 70px;
@@ -40,6 +37,7 @@ article{
 
 .menu li, .right-menu li {
   /* display: inline-block; */
+  list-style-type: none !important;
   margin-right: 10px;
 }
 
@@ -420,6 +418,9 @@ https://uiverse.io/Prince4fff/slippery-baboon-37
 /* card end */
 /* search result end*/
 
+
+
+/* Custom Asciidoc css */
 /*-------Result display--------------*/
 /* Array to the right if closed */
 details summary::after {
@@ -432,3 +433,78 @@ details[open] summary::after {
   content: '\25BC'; 
   padding-left: 0.5rem;
 }
+
+
+/* Admonition css */
+.admonitionblock > table { border: 0; background: none; width: 100%; }
+.admonitionblock > table td.icon img { max-width: none; }
+.admonitionblock > table td.icon .title { font-weight: bold; text-transform: uppercase; }
+.admonitionblock > table td.content { padding-left: 1.125em; padding-right: 1.25em; border: none; border-left: 1px solid #dddddd; color: #ffffff; }
+.admonitionblock > table td.content > :last-child > :last-child { margin-bottom: 0; }
+
+
+.admonitionblock td.icon .title::before {
+  font-family: "Font Awesome 6 Free";
+  font-size: 20;
+  margin: 10;
+  padding-right: 5;
+}
+
+
+.admonitionblock td.icon [class^="icon-"]:before { font-size: 2.5em; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); cursor: default; }
+td.icon .title {color: white;}
+.Note td.icon .title:before { content: "\f05a";  }
+.Tip td.icon .title:before { content: "\f0eb"; }
+.Warning td.icon .title:before { content: "\f071"; }
+.Caution td.icon .title:before { content: "\f06d";  }
+.Important td.icon .title:before { content: "\f06a";}
+
+
+.Note td.icon  { background-color: #006699;  }
+.Tip td.icon { background-color:  rgba(155, 155, 0, 0.8); }
+.Warning td.icon { background-color: #bf6900; }
+.Caution td.icon  { background-color: #bf3400; }
+.Important td.icon  { background-color: #bf0000; }
+
+.admonitionblock table {
+  position: relative;
+  table-layout: fixed;
+  width: 100%;
+  border-radius: .3em;
+  margin: 20 20 30 20;
+}
+
+.admonitionblock .icon{
+  background: linear-gradient(90deg,rgba(0,0,0,.2) 0,rgba(0,0,0,.2)) no-repeat 0 /3em 100%;
+  background-color: rgba(0, 0, 0, 0);
+border-radius: .5em;
+font-size: calc(15/var(--rem-base)*1rem);
+left: 0;
+line-height: 1;
+padding: .3em .5em;
+position: absolute;
+top: 0;
+transform: translate(-.5rem,-50%);
+margin-top: 15;
+background-color: white;
+}
+
+
+.admonitionblock td.icon i::before {
+  content: attr(title);
+  filter: invert(100%);
+  font-style: normal;
+  font-weight: var(--admonition-label-font-weight);
+  margin: 3.0em;
+  padding: 0 .5em;
+  text-transform: uppercase;
+}
+.admonitionblock .content {
+  word-wrap: anywhere;
+  background: var(--admonition-background);
+  padding: 2rem 3rem .75rem;
+  width: 100%;
+
+}
+
+/* end of administion css */

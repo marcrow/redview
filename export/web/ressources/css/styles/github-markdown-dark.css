@@ -210,7 +210,7 @@ body {
   
   .markdown-body table {
     border-spacing: 0;
-    border-collapse: collapse;
+    /* border-collapse: collapse; */
     display: block;
     width: max-content;
     max-width: 100%;
