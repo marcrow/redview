@@ -41,10 +41,8 @@ def add_phase_in_content(phases, files_content, cfile, content):
 
 
 def clean_end_path(path):
-        if path[-1] != "/":
-            return  path + "/"
-        elif path[-2] == "/":
-            return path[:-1]
+        path = path + "/"
+        path = path.replace("//","/")
         return path
 
 def extract_yaml_conf(yaml_file):

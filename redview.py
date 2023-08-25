@@ -25,10 +25,8 @@ class RedviewGenerator:
         self.dir_to_exclude = dir_to_exclude
         self.mainTags = mainTags
         self.real_path = path.dirname(path.realpath(__file__))
+        
 
-
-        if FORMAT == "web" or "markmap" or "md":
-            self.export_web()
 
     def export_web(self):
         source_directory = self.script_dir + "/export/web/"
@@ -80,7 +78,13 @@ class RedviewGenerator:
             #generate_doc(dir_markdown_getter, markdown_writter)
             self.generate_doc()
             self.goto_parent_dir()
-        
+
+    """Used to copy all files in a dest directory, to limit web server configuration disclosure"""
+    def dest_to_data(self):
+        self.dest = self.dest + "/data/"
+        self.ROOT_DEST = self.ROOT_DEST + "/data/"
+        makedirs(path.dirname(self.dest), exist_ok=True)
+
 
 #------------------Create document---------------
         
@@ -155,12 +159,18 @@ def main():
 
     mkdir(dest)
     redview = RedviewGenerator(FORMAT, src, dest, script_dir, dir_to_exclude, mainTags)
+
     # markdown_getter = MarkdownGetter(FORMAT, src, dest , dir_to_exclude , mainTags) 
     # markdown_writter = MarkdownWritter(FORMAT, dest, mainTags)
+    if FORMAT == "web" or "markmap" or "md":
+            redview.export_web()
+            redview.dest_to_data()
+
     if FORMAT == "web":
         redview.FORMAT = "markmap"
         redview.generate_doc()
         redview = RedviewGenerator("md", src, dest, script_dir, dir_to_exclude, mainTags)
+        redview.dest_to_data()
     redview.generate_doc()
 
 if __name__ == '__main__':

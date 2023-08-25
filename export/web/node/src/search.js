@@ -31,14 +31,13 @@ exports.searchFiles = (req, res) => {
     if (currentDirectory.endsWith('.html') || currentDirectory.endsWith('.md')) {
       let currentDirectory = path.dirname(currentDirectory);
     }
-    console.log(currentDirectory)
     if (!currentDirectory || !/^[\w/.]+$/.test(currentDirectory) || currentDirectory.includes("..")) {
       res.status(400).json({ error: 'Le répertoire courant est invalide.' });
       return;
     }
   }
 
-  const folderPath = searchFromCurrentDir ? process.env.PWD + "/" + currentDirectory : process.env.PWD;
+  const folderPath = searchFromCurrentDir ? process.env.PWD + "/data/" + currentDirectory : process.env.PWD;
   if (!path.resolve(folderPath).startsWith(process.env.PWD)) {
     console.error("lfi attempt via " + folderPath);
     res.status(400).json({ error: 'La requête de recherche est invalide.' });
@@ -176,7 +175,7 @@ function searchInMd(filePath, searchQuery, searchInTitles, unique) {
                 ignore = true;
               }
               matchingLines.push({
-                file: filePath.replace(process.env.PWD, ""),
+                file: filePath.replace( process.env.PWD + "/data", ""),
                 line: index + 1,
                 content: line.trim().slice(0, 130) + "...",
                 nearTitle,
@@ -237,8 +236,9 @@ function searchInAsciidoc(filePath, searchQuery, searchInTitles, unique) {
               if (unique) {
                 ignore = true;
               }
+
               matchingLines.push({
-                file: filePath.replace(process.env.PWD, ""),
+                file: filePath.replace( process.env.PWD + "/data", ""),
                 line: index + 1,
                 content: line.trim().slice(0, 130) + "...",
                 nearTitle,

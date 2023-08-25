@@ -126,7 +126,6 @@ function processAsciidocFile(filePath, res) {
       // const asciidocContent = data;
       let htmlContent = htmldata;
       htmlContent = htmlContent.replace("$css", getCss());
-      console.log(Asciidoctor.convert(asciidocContent))
       htmlContent = htmlContent.replace("$md", Asciidoctor.convert(asciidocContent, {'standalone':true}))
       htmlContent = retieveBadChar(htmlContent);
       res.header('Content-Type', 'text/html'); // Spécifier explicitement le type MIME
@@ -193,7 +192,6 @@ if (doesExist) {
     }
     return true;
 } else {
-    console.log(filePath)
     return false;
 }
 }
@@ -274,11 +272,21 @@ function otherFilesResponder(req, res){
     }
 }
 
-  
+const resources = (req,res) => {
+  const url = decodeURIComponent(req.url);
+  let filePath = path.join(process.env.PWD, url);
+  const is_valid = validateInput(filePath);
+  if (!is_valid && extension != ".html") { //except html because markmap from adoc is generate in real-time
+      return res.status(404).send('File not found.'+extension);
+  }
+  return res.sendFile(filePath);
+
+};
 
 const index = (req, res) => {
   const url = decodeURIComponent(req.url);
-  let filePath = path.join(process.env.PWD, url);
+  let filePath = path.join(process.env.PWD, "/data");
+  filePath = path.join(filePath, url);
 
   // if (!is_valid) {
   //   const alternateFilePath = filePath.replace('.html', '.adoc'); 
@@ -326,5 +334,5 @@ const index = (req, res) => {
 };
 
 module.exports = {
-  index,
+  index,resources
 };

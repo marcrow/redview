@@ -33,6 +33,7 @@ class Directory_Processor:
     def create_sub_dir(self):
         text = ""
         for directory in self.child_dir:
+            directory = directory.replace(self.ROOT_DEST,"")
             directory = directory.replace(" ","_")
             if not path.exists(self.dest+directory):
                 mkdir(self.dest+directory)
@@ -40,7 +41,7 @@ class Directory_Processor:
             if self.FORMAT == "markmap":
                 text = text + "- " + self.format_link(directory,"./"+directory+"/index.html")+"  \n"
             elif self.FORMAT == "md":
-                text = text + "- 📁 " + self.format_link(directory,self.dest+directory+"/")+"  \n"
+                text = text + "- 📁 " + self.format_link(directory,"./"+directory+"/")+"  \n"
             elif self.FORMAT == "obsidian":
                 text = text + "- " + self.format_link(directory,"./"+directory+"/"+directory+".md") + "  \n"
             
