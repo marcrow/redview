@@ -229,7 +229,7 @@ function goMindmap(){
     target = target + "/index.html"
   } else {
     target = pathname.replace(".md",".html");
-    target = pathname.replace(".adoc",".html");
+    target = target.replace(".adoc",".html");
   }
   console.log(pathname)
   window.location.href = target
