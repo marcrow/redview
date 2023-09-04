@@ -73,25 +73,37 @@ class AsciidocGetter:
         directories = [f for f in listdir(self.src) if not isfile(join(self.src, f))]
         return [item for item in directories if not (item.startswith("."))]
     
-    def build_title_structure(self, titles):
+    def add_new_title(self, level, title, cfile, title_structure, current_level_1, current_level_2):
+        if level == 1:
+                title_structure.append({title: []})
+                current_level_1 = title_structure[-1][title]            
+        elif level == 2:
+            if current_level_1 is None:
+                print(f"Warning - Invalid structure: in {cfile}, '{title}' is a level 2 title wich does not depend on a title of level 1. File name add as title 1.")
+                title_structure, current_level_1, current_level_2 = self.add_new_title(1, cfile.replace(".adoc",""), cfile, title_structure, current_level_1, current_level_2)
+            current_level_1.append({title: []})
+            current_level_2 = current_level_1[-1][title]
+
+        elif level == 3:
+            if current_level_1 is None:
+                print(f"Warning - Invalid structure: in {cfile}, '{title}' is a level 2 title wich does not depend on a title of level 1. File name add as title 1.")
+                title_structure, current_level_1, current_level_2 = self.add_new_title(1, cfile.replace(".adoc",""), cfile, title_structure, current_level_1, current_level_2)
+            if current_level_2 is None:
+                print(f"Warning - Invalid structure: in {cfile}, '{title}' is a level 3 title wich does not depend on a title of level 2. Transform level 3 to level 2 title.")
+                current_level_1.append({title: []})
+                current_level_2 = current_level_1[-1][title]
+            else:
+                current_level_2.append(title)
+        return title_structure, current_level_1, current_level_2
+    
+    def build_title_structure(self, titles, cfile):
         title_structure = []
-        
+        current_level_1 = None
+        current_level_2 = None
         for level, title in titles:
             title = title.strip()
-            if level == 1:
-                title_structure.append({title: []})
-                current_level_1 = title_structure[-1][title]
-            elif level == 2:
-                if current_level_1 is not None:
-                    current_level_1.append({title: []})
-                    current_level_2 = current_level_1[-1][title]
-                else:
-                    raise ValueError(f"Invalid structure: title '{title}' of level 2 does not depend on a title of level 1")
-            elif level == 3:
-                if current_level_2 is not None:
-                    current_level_2.append(title)
-                else:
-                    raise ValueError(f"Invalid structure: title '{title}' of level 3 does not depend on a title of level 2")
+            title_structure, current_level_1, current_level_2 = self.add_new_title(level, title, cfile, title_structure, current_level_1, current_level_2)
+            
         return title_structure
     
     def internal_link(self, text, destination, header):
@@ -192,11 +204,15 @@ class AsciidocGetter:
 
     def extract_titles(self, asciidoc_text):
         titles = []
-        
+        is_code= False
         lines = asciidoc_text.split('\n')
         
         for index, line in enumerate(lines):
             match = re.match(r'^(=+)\s+(.*)', line)
+            if line.startswith("```"):
+                is_code= not is_code
+            if is_code:
+                continue
             if match:
                 level = len(match.group(1))
                 title = match.group(2)
@@ -250,7 +266,7 @@ class AsciidocWritter:
         cfile = cfile.replace(" ", "-")
         yaml, asciidoc_text = asciidoc_getter.parse_asciidoc_file(asciidoc_getter.src+ocfile)
         titles = asciidoc_getter.extract_titles(asciidoc_text)
-        file_content = asciidoc_getter.build_title_structure(titles)
+        file_content = asciidoc_getter.build_title_structure(titles, cfile)
         phases = asciidoc_getter.extract_phase(asciidoc_text, file_content)
         add_phase_in_content(phases, file_content, ocfile, content)
 
