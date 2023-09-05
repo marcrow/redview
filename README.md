@@ -153,6 +153,9 @@ In addition of the current usage, redview will be able to automatically update m
 Search based on tags set in yaml at the the top of md files.  
 Update your sql db from your md note and vice versa.
 
+# Issue 
+1. hacktricks image links
+
 __document under construction...__
 
 

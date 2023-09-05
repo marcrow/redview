@@ -69,9 +69,6 @@ class AsciidocGetter:
         return result
     
 
-    def get_directories(self):
-        directories = [f for f in listdir(self.src) if not isfile(join(self.src, f))]
-        return [item for item in directories if not (item.startswith("."))]
     
     def add_new_title(self, level, title, cfile, title_structure, current_level_1, current_level_2):
         if level == 1:
@@ -262,12 +259,17 @@ class AsciidocWritter:
         yaml = ""
         asciidoc_text = ""
         ocfile = cfile
-        
+        #For readme file, if it's possible rename them as the directory name
+        if cfile.lower() == "readme.md" :
+            cfile = path.basename(path.dirname(asciidoc_getter.src)) + ".md"
+            if path.isfile(asciidoc_getter.src+cfile):
+                return
         cfile = cfile.replace(" ", "-")
+        
         yaml, asciidoc_text = asciidoc_getter.parse_asciidoc_file(asciidoc_getter.src+ocfile)
         titles = asciidoc_getter.extract_titles(asciidoc_text)
         file_content = asciidoc_getter.build_title_structure(titles, cfile)
         phases = asciidoc_getter.extract_phase(asciidoc_text, file_content)
-        add_phase_in_content(phases, file_content, ocfile, content)
+        add_phase_in_content(phases, file_content, cfile, content)
 
         shutil.copy(asciidoc_getter.src+ocfile, self.dest+cfile)

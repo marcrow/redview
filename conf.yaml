@@ -1,6 +1,7 @@
 exclude: #Not implemented yet
     files: [".git"]
-    directories: [".vscode", "__pycache__", "node"]
+    directories: [".vscode", "__pycache__", "node", ".git", ".github"]
+    hidden_dir: False
 defaultSrc:
 tag:
     #Note tags

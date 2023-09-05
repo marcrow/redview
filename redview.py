@@ -16,13 +16,14 @@ from src.utils import *
 from src.dir_processor import Directory_Processor
 
 class RedviewGenerator:
-    def __init__(self, FORMAT : str, src : str, dest : str, script_dir : str, dir_to_exclude : list, mainTags : list):
+    def __init__(self, FORMAT : str, src : str, dest : str, script_dir : str, dir_to_exclude : list, exclude_hidden_dir : bool, mainTags : list):
         self.FORMAT = FORMAT
         self.src = src 
         self.dest = dest
         self.ROOT_DEST = dest
         self.script_dir = script_dir
         self.dir_to_exclude = dir_to_exclude
+        self.exclude_hidden_dir = exclude_hidden_dir
         self.mainTags = mainTags
         self.real_path = path.dirname(path.realpath(__file__))
         
@@ -50,7 +51,10 @@ class RedviewGenerator:
 
     def get_directories(self):
         directories = [f for f in listdir(self.src) if not isfile(join(self.src, f)) and not f in self.dir_to_exclude]
-        return [item  for item in directories if not (item.startswith("."))]
+        if self.exclude_hidden_dir : 
+            return [item  for item in directories if not (item.startswith("."))]
+        else:
+            return [item  for item in directories]
     
     @staticmethod
     def last_slash_index(path):
@@ -130,6 +134,7 @@ def main():
 
     script_dir = path.dirname(path.realpath(__file__))
     dir_to_exclude = getDirToExclude(script_dir+"/conf.yaml")
+    exclude_hidden_dir = hiddenDirSettings(script_dir+"/conf.yaml")
     mainTags = getMainTags(script_dir+"/conf.yaml")
 
 
@@ -158,7 +163,7 @@ def main():
         #     rmtree(dest)
 
     mkdir(dest)
-    redview = RedviewGenerator(FORMAT, src, dest, script_dir, dir_to_exclude, mainTags)
+    redview = RedviewGenerator(FORMAT, src, dest, script_dir, dir_to_exclude, exclude_hidden_dir, mainTags)
 
     # markdown_getter = MarkdownGetter(FORMAT, src, dest , dir_to_exclude , mainTags) 
     # markdown_writter = MarkdownWritter(FORMAT, dest, mainTags)
@@ -169,7 +174,7 @@ def main():
     if FORMAT == "web":
         redview.FORMAT = "markmap"
         redview.generate_doc()
-        redview = RedviewGenerator("md", src, dest, script_dir, dir_to_exclude, mainTags)
+        redview = RedviewGenerator("md", src, dest, script_dir, dir_to_exclude, exclude_hidden_dir, mainTags)
         redview.dest_to_data()
     redview.generate_doc()
 

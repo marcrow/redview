@@ -69,6 +69,13 @@ def getDirToExclude(yaml_file):
         return main_structure
     return None 
 
+def hiddenDirSettings(yaml_file):
+    with open(yaml_file, 'r') as file:
+        data = yaml.safe_load(file)
+        isRestricted = data['exclude']['hidden_dir']
+        return isRestricted
+    return True
+
 def getFileToExclude(yaml_file):
     with open(yaml_file, 'r') as file:
         data = yaml.safe_load(file)

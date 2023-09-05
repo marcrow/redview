@@ -179,7 +179,7 @@ class Directory_Processor:
         text_sub_dir = self.create_sub_dir()
         #Copy every files + load titles + add md toc
         for cfile in files :
-            if cfile[-3:] == ".md" and cfile.lower() != "readme.md":
+            if cfile[-3:] == ".md":
                 markdown_getter = MarkdownGetter(self.FORMAT, self.src , self.dir_to_exclude , self.mainTags, self.real_path) 
                 markdown_writter = MarkdownWritter(self.FORMAT, self.dest, self.ROOT_DEST,  self.mainTags, self.real_path)
                 markdown_writter.process_markdown_file(cfile, content, markdown_getter)
@@ -188,7 +188,9 @@ class Directory_Processor:
                 asciidocWritter = AsciidocWritter(self.FORMAT, self.dest, self.ROOT_DEST,  self.mainTags, self.real_path)
                 asciidocWritter.process_asciidoc_file(cfile, content, asciidocGetter)
             else:
-                shutil.copy(self.src+cfile, self.dest+cfile.replace(" ","-"))
+                dest = self.dest+cfile.replace(" ","-")
+                if not path.isfile(dest):
+                    shutil.copy(self.src+cfile, dest)
             file_list.append(cfile)
         
         text = "" 

@@ -116,10 +116,6 @@ class MarkdownGetter:
         return result
 
 
-    def get_directories(self):
-        directories = [f for f in listdir(self.src) if not isfile(join(self.src, f))]
-        return [item for item in directories if not (item.startswith("."))]
-    
     def add_new_title(self, level, title, cfile, title_structure, current_level_1, current_level_2):
         if level == 1:
                 title_structure.append({title: []})
@@ -312,12 +308,17 @@ class MarkdownWritter:
         markdown_text = ""
         ocfile = cfile
         cfile = cfile.replace(" ", "-")
+        #For readme file, if it's possible rename them as the directory name
+        if cfile.lower() == "readme.md" :
+            cfile = path.basename(path.dirname(markdown_getter.src)) + ".md"
+            if path.isfile(markdown_getter.src+cfile):
+                return
         summary = markdown_getter.generate_summary(markdown_getter.src+ocfile, cfile, phases) # and get phase
         yaml, markdown_text = markdown_getter.parse_markdown_file(markdown_getter.src+ocfile)
         titles = markdown_getter.extract_titles(markdown_text)
         file_content = markdown_getter.build_title_structure(titles, cfile)
         phases = markdown_getter.extract_phase(markdown_text, file_content)
-        add_phase_in_content(phases, file_content, ocfile, content)
+        add_phase_in_content(phases, file_content, cfile, content)
 
         if cfile[-2:] == "md": #generate markmap file
             if self.FORMAT == "markmap":
