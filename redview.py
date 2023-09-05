@@ -142,7 +142,7 @@ def main():
     # src = path.dirname(path.realpath(__file__))
 
     src = args.source
-
+    src = clean_end_path(src)
     if not path.exists(src):
         print("error: Source directory "+src+" not found")
         exit()
