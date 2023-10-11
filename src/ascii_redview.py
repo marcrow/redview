@@ -272,4 +272,12 @@ class AsciidocWritter:
         phases = asciidoc_getter.extract_phase(asciidoc_text, file_content)
         add_phase_in_content(phases, file_content, cfile, content)
 
-        shutil.copy(asciidoc_getter.src+ocfile, self.dest+cfile)
+        try:
+            shutil.copy(asciidoc_getter.src+ocfile, self.dest+cfile)
+        except shutil.SameFileError:
+            print(self.dest+cfile+" File already exists")
+            pass
+        else:
+            print("Issue ignored for "+self.dest+cfile+" copy")
+            pass
+

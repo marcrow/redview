@@ -157,6 +157,8 @@ class MarkdownGetter:
         elif self.FORMAT == "markmap":
             #destination = destination.replace(".md", ".html")
             return "["+text.replace("\n","")+"]("+destination.replace("\n","")+"#"+"".join(header.lower().rstrip().lstrip()).replace(" ","-")+")  "
+        else:
+            return "["+text.replace("\n","")+"]("+destination.replace("\n","")+"#"+replace_fr_char("".join(header.lower().rstrip().lstrip()).replace(" ","-").replace("(","").replace(")",""))+")  "
 
 
     @staticmethod
@@ -303,7 +305,7 @@ class MarkdownWritter:
     
     def process_markdown_file(self, cfile, content, markdown_getter):
         phases=[]
-        summary=""
+        #summary=""
         yaml = ""
         markdown_text = ""
         ocfile = cfile
@@ -313,25 +315,36 @@ class MarkdownWritter:
             cfile = path.basename(path.dirname(markdown_getter.src)) + ".md"
             if path.isfile(markdown_getter.src+cfile):
                 return
-        summary = markdown_getter.generate_summary(markdown_getter.src+ocfile, cfile, phases) # and get phase
+        #summary = markdown_getter.generate_summary(markdown_getter.src+ocfile, cfile, phases) # and get phase
         yaml, markdown_text = markdown_getter.parse_markdown_file(markdown_getter.src+ocfile)
         titles = markdown_getter.extract_titles(markdown_text)
         file_content = markdown_getter.build_title_structure(titles, cfile)
         phases = markdown_getter.extract_phase(markdown_text, file_content)
         add_phase_in_content(phases, file_content, cfile, content)
 
-        if cfile[-2:] == "md": #generate markmap file
-            if self.FORMAT == "markmap":
-                cfile = cfile[:-2] + "html"
-            with open(self.dest+cfile, "w") as df:
-                if self.FORMAT == "markmap":
-                    with open(self.realpath+"/export/web/ressources/template.html", "r") as tf: 
-                        for line in tf:          
-                            df.write(line)
-                df.write(yaml)
-                if self.FORMAT != "markmap":
-                    df.write(summary)
-                markdown_text = self.remove_tag(markdown_text)
-                df.write(markdown_text)
-                if self.FORMAT == "markmap":
-                    df.write("</script></div><span id='source' hidden='hidden'>.md</span></body></html>")
+
+        # Removed to simplify the web usage in docker - need to be update to be used with without web interface
+        # if cfile[-2:] == "md": #generate markmap file
+        #     if self.FORMAT == "markmap":
+        #         cfile = cfile[:-2] + "html"
+        #     with open(self.dest+cfile, "w") as df:
+        #         if self.FORMAT == "markmap":
+        #             with open(self.realpath+"/export/web/ressources/template.html", "r") as tf: 
+        #                 for line in tf:          
+        #                     df.write(line)
+        #         df.write(yaml)
+        #         if self.FORMAT != "markmap":
+        #             df.write(summary)
+        #         markdown_text = self.remove_tag(markdown_text)
+        #         df.write(markdown_text)
+        #         if self.FORMAT == "markmap":
+        #             df.write("</script></div><span id='source' hidden='hidden'>.md</span></body></html>")
+
+        try:
+            shutil.copy(markdown_getter.src+ocfile, self.dest+cfile)
+        except shutil.SameFileError:
+            print(self.dest+cfile+" File already exists")
+            pass
+        else:
+            print("Issue ignored for "+self.dest+cfile+" copy")
+            pass

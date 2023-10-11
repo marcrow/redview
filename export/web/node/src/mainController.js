@@ -85,7 +85,6 @@ function getCss() {
         yaml = lines.slice(0, yamlEnd - 1).join('\n');
         break;
       }
-      
       if (line === '') {
         continue;
       } else if (isYaml) {
@@ -98,13 +97,14 @@ function getCss() {
         isYaml = true;
       } else {
         yamlEnd = i;
+        break;
       }
     }
     if (yamlEnd == 0){
       markdownText = lines;
     }
     result[0]=yaml;
-    result[1]=markdownText;
+    result[1]=markdownText.join("\n");
     return result;
   }
 
@@ -135,32 +135,125 @@ function processAsciidocFile(filePath, res) {
   });
 }
 
-function processMarkdownFile(filePath, res) {
-    fs.readFile(filePath, 'utf-8', (err, data) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).send('Erreur lors de la lecture du fichier Markdown.');
+function generateSummary(markdownText) {
+  const lines = markdownText.split('\n');
+  const sommaire = [];
+  let insideCodeBlock = false; // Pour détecter si nous sommes à l'intérieur d'un bloc de code
+
+  lines.forEach(line => {
+      // Vérifier les blocs de code
+      if (line.trim() === "```") {
+          insideCodeBlock = !insideCodeBlock;
+          return;
       }
-  
-      const templatePath = process.env.MD2HTML;
-      fs.readFile(templatePath, 'utf-8', (err, htmldata) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).send('Erreur lors de la lecture du template html');
-        }
-        let content = escapeBadChar(data);
-        const parsedContent = extractYamlAndMarkdown(content);
-        const markdownContent = parsedContent[1];
-        let htmlContent = htmldata;
-        htmlContent = htmlContent.replace("$css", getCss());
-        htmlContent = htmlContent.replace("$md", converter.makeHtml(markdownContent))
-        htmlContent = retieveBadChar(htmlContent);
-        res.header('Content-Type', 'text/html'); // Spécifier explicitement le type MIME
-        res.send(htmlContent);
-      })
-  
-    });
-  }
+      
+      if (insideCodeBlock) return;
+
+      // Détecter les titres en ne prenant en compte que ceux qui ont un espace après le '#'
+      const result = /^(\#{1,6})\s+(.*)$/.exec(line);
+      if (result) {
+          const level = result[1].length;
+          const title = result[2];
+          sommaire.push({ level, title });
+      }
+  });
+
+  let output = '## Summary\n';
+  sommaire.forEach(item => {
+      const indent = '  '.repeat(item.level - 1);
+      const link = item.title
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^\w\-]/g, '');
+      output += `${indent}- [${item.title}](#${link})\n`;
+  });
+
+  return output;
+}
+
+function generateMarkdownWithSummary(filepath) {
+  return new Promise((resolve, reject) => {
+      fs.readFile(filepath, 'utf-8', (err, data) => {
+          if (err) {
+              reject(err);
+              return;
+          }
+          let content = escapeBadChar(data);
+          const parsedContent = extractYamlAndMarkdown(content);
+          let markdownContent = parsedContent[1];
+          if (path.basename(filepath) === "Readme.md"){
+            resolve(markdownContent);
+          }
+          else{
+            const summary = generateSummary(markdownContent);
+            resolve(summary + "\n\n" + markdownContent);
+          }
+          
+      });
+  });
+}
+
+function convertMarkdownToHtml(filepath) {
+  return generateMarkdownWithSummary(filepath)
+      .then(markdownWithSummary => {
+          return new Promise((resolve, reject) => {
+              const templatePath = process.env.MD2HTML;
+              fs.readFile(templatePath, 'utf-8', (err, htmldata) => {
+                  if (err) {
+                      reject(err);
+                      return;
+                  }
+
+                  let htmlContent = htmldata;
+                  htmlContent = htmlContent.replace("$css", getCss());
+                  htmlContent = htmlContent.replace("$md", converter.makeHtml(markdownWithSummary));
+                  htmlContent = retieveBadChar(htmlContent);
+                  resolve(htmlContent);
+              });
+          });
+      });
+}
+
+function processMarkdownFile(filepath, res){
+  convertMarkdownToHtml(filepath)
+        .then(htmlContent => {
+            res.header('Content-Type', 'text/html');
+            res.send(htmlContent);
+        })
+        .catch(err => {
+            console.error(err);
+            res.status(500).send(err.message);
+        });
+}
+
+
+
+
+function mdToMarkmap(filePath, res){
+
+  fs.readFile(filePath, 'utf-8', (err, data) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('File not found');
+    }
+    const parsedContent = extractYamlAndMarkdown(data);
+    const markdownContent = parsedContent[1];
+    let response = ""
+    fs.readFile("ressources/template.html", 'utf-8', (err, template) => {
+      if (err){
+        console.error(err);
+        return res.status(500).send('markmap html template not found');
+      }
+      response = template;
+      response = response +  markdownContent;
+      response = response + "</script></div><span id='source' hidden='hidden'>.md</span></body></html>";
+      res.send(response);
+
+    })
+
+  });
+};
+
 
 function asciiToMarkmap(filePath, res){
   let response = ""
@@ -310,12 +403,19 @@ const index = (req, res) => {
   if (path.extname(filePath) === ".md") {
     return processMarkdownFile(filePath, res);
   } else if (path.extname(filePath) === ".html") {
+    // if the file exists deliver it, else test if adoc exists then if md exists else return 404. If md or adoc file exist, then return markmap file
     fs.access(filePath, fs.constants.F_OK, (err) => {
       if (err){
         const alternateFilePath = filePath.replace('.html', '.adoc');
         fs.access(alternateFilePath, fs.constants.F_OK, (err) => {
           if (err) {
-              return res.status(404).send('File not found.');
+            const alternateFilePath = filePath.replace('.html', '.md');
+            fs.access(alternateFilePath, fs.constants.F_OK, (err) => {
+              if (err) {
+                return res.status(404).send('File not found.');
+              }else{
+                mdToMarkmap(alternateFilePath, res);
+              }})
           }else{
               asciiToMarkmap(alternateFilePath, res);
           }})

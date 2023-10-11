@@ -6,6 +6,9 @@ from os import path
 from os import listdir
 from os import walk
 from os import makedirs
+from os import symlink
+from os import remove
+import time
 from shutil import rmtree
 import shutil
 import re
@@ -14,6 +17,127 @@ import argparse
 import textwrap
 from src.utils import *
 from src.dir_processor import Directory_Processor
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+class Watcher:
+
+    def __init__(self, redviewGenerator):
+        self.redviewGenerator = redviewGenerator
+        self.DIRECTORY_TO_WATCH = self.redviewGenerator.src
+        self.observer = Observer()
+
+    def run(self):
+        event_handler = Handler(self.redviewGenerator)
+        self.observer.schedule(event_handler, self.DIRECTORY_TO_WATCH, recursive=True)
+        self.observer.start()
+        try:
+            while True:
+                time.sleep(5)
+        except:
+            self.observer.stop()
+            print("Observer Stopped")
+
+        self.observer.join()
+
+class Handler(FileSystemEventHandler):
+    def __init__(self, redviewGenerator):
+        self.redviewGenerator = redviewGenerator
+        self.ignore_types = [".swp",".swx", "swpx"]
+        self.ignore_next = ""
+
+    def process(self, event):
+        """
+        Événement détecté.
+        """
+        print("Event occurr: ", event.event_type, event.src_path, path.dirname(event.src_path))
+        if self.ignore_file(event.src_path):
+            # print(event.src_path+" ignored")
+            return 0
+        if self.ignore_next == event.src_path:
+            # print(event.src_path+" ignored")
+            self.ignore_next=""
+            return 0
+        dest_file = event.src_path.replace(self.redviewGenerator.src, self.redviewGenerator.ROOT_DEST)
+        dest_directory = path.dirname(dest_file)
+        # print("dest_directory "+ dest_directory)
+        # print("dest_file "+ dest_file)
+        #targetReadme = clean_end_path(event.src_path)
+        targetDir = clean_end_path(dest_directory)
+        # if not event.is_directory:
+        targetReadme = clean_end_path(path.dirname(event.src_path))
+        #targetDir = clean_end_pathpath(dest_directory)
+        if event.event_type == "created" :
+            # when directory is created
+            if event.is_directory:
+                print("create dir "+dest_file)
+                makedirs(dest_file, exist_ok=True)
+#----- Add code here to generate empty readme in the new directory TBD ------
+                # targetReadme = clean_end_path(path.dirname(event.src_path))
+            # when file is created
+            else:
+                print("create symlink "+dest_file)
+                symlink(event.src_path,dest_file)
+        if event.event_type == "deleted" :
+            # when directory is deleted
+            if event.is_directory:
+                print("delete dir "+dest_file)
+                try:
+                    rmtree(dest_file)
+                except FileNotFoundError:
+                    return
+                except Exception as err:
+                    print(f"Unexpected {err=}, {type(err)=}")
+                    return
+            # when file is deleted
+            else:
+                print("delete file "+dest_file)
+                try:
+                    remove(dest_file)
+                except FileNotFoundError:
+                    # if a directory is deleted, the delete file event for a file from the deleted directory can be generated before the directory event itself
+                    return
+                except Exception as err:
+                    print(f"Unexpected {err=}, {type(err)=}")
+                    return
+            
+            if not path.exists(targetReadme):
+                print("parent directory also deleted")
+                return
+            dest_file = dest_directory
+        
+        # when directories are created or suppressed
+        if event.event_type != "modified" and event.is_directory :
+            #targetDir = clean_end_path(dest_file)
+            print("generate readme "+targetReadme+ " to "+targetDir)
+            dir_processor = Directory_Processor(self.redviewGenerator.FORMAT, targetReadme, targetDir, self.redviewGenerator.ROOT_DEST, self.redviewGenerator.script_dir, self.redviewGenerator.dir_to_exclude, self.redviewGenerator.mainTags, self.redviewGenerator.real_path, self.redviewGenerator.exclude_hidden_dir)
+            dir_processor.generate_readme()
+        # when files are modified, created and suppressed. 
+        # If creation is excluded from the condition definition, this is because every file creation event is followed by a file modification event.
+        # And we don't want to duplicate generate_me calls for nothing
+        if event.event_type != "created" and not event.is_directory :
+            print("generate readme "+targetReadme+ " to "+targetDir)
+            dir_processor = Directory_Processor(self.redviewGenerator.FORMAT, targetReadme, targetDir, self.redviewGenerator.ROOT_DEST, self.redviewGenerator.script_dir, self.redviewGenerator.dir_to_exclude, self.redviewGenerator.mainTags, self.redviewGenerator.real_path, self.redviewGenerator.exclude_hidden_dir)
+            dir_processor.generate_readme()
+
+        print("Event occurred: ", event.event_type, event.src_path, path.dirname(event.src_path))
+
+    def on_modified(self, event):
+        self.process(event)
+
+    def on_created(self, event):
+        self.process(event)
+
+    def on_deleted(self, event):
+        self.process(event)
+    
+    def ignore_file(self,src_path):
+        for ignore_type in self.ignore_types:
+            if src_path.endswith(ignore_type):
+                directory_path = path.dirname(src_path)
+                self.ignore_next = directory_path
+                return True 
+        return False
 
 class RedviewGenerator:
     def __init__(self, FORMAT : str, src : str, dest : str, script_dir : str, dir_to_exclude : list, exclude_hidden_dir : bool, mainTags : list):
@@ -49,12 +173,7 @@ class RedviewGenerator:
                 makedirs(destination_dir, exist_ok=True)
 
 
-    def get_directories(self):
-        directories = [f for f in listdir(self.src) if not isfile(join(self.src, f)) and not f in self.dir_to_exclude]
-        if self.exclude_hidden_dir : 
-            return [item  for item in directories if not (item.startswith("."))]
-        else:
-            return [item  for item in directories]
+    
     
     @staticmethod
     def last_slash_index(path):
@@ -71,10 +190,9 @@ class RedviewGenerator:
 
 
     def generate_doc(self):
-        dir = self.get_directories()
-        dir_processor = Directory_Processor(self.FORMAT, self.src, self.dest, self.ROOT_DEST, self.script_dir, dir ,self.dir_to_exclude, self.mainTags, self.real_path)
+        dir_processor = Directory_Processor(self.FORMAT, self.src, self.dest, self.ROOT_DEST, self.script_dir ,self.dir_to_exclude, self.mainTags, self.real_path, self.exclude_hidden_dir)
         dir_processor.generate_readme()
-        for directory in dir:
+        for directory in dir_processor.child_dir:
             self.src = clean_end_path(self.src+"/"+directory)
             self.dest = clean_end_path(self.dest+"/"+directory.replace(" ","_"))
             # dir_markdown_getter = MarkdownGetter(markdown_getter.FORMAT, markdown_getter.src+"/"+directory, markdown_getter.dest+"/"+directory, markdown_getter.dir_to_exclude, markdown_getter.mainTags) 
@@ -118,6 +236,7 @@ def main():
     parser.add_argument("--name", "-n", help="Nom du projet, par défaut redview",  default="redview", required=False)
     parser.add_argument("--path", "-p", help="Chemin destination de des notes formatées, par défaut /tmp/",  default="/tmp/", required=False)
     parser.add_argument("--format", "-f", help="Format de sortie optimisée pour : web, obsidian et markmap", choices=["web","md","obsidian","markmap"], default="web")
+    parser.add_argument("--watcher", "-w", help="Run redview in the background and update automatically note from source to path", action="store_true")
     parser.add_argument("--verbose", "-v", help="Augmente le niveau de verbosité",action="store_true")
     parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS, 
                     help='Show this help message and exit.')
@@ -167,16 +286,15 @@ def main():
 
     # markdown_getter = MarkdownGetter(FORMAT, src, dest , dir_to_exclude , mainTags) 
     # markdown_writter = MarkdownWritter(FORMAT, dest, mainTags)
-    if FORMAT == "web" or "markmap" or "md":
+    if FORMAT == "web" :
             redview.export_web()
             redview.dest_to_data()
 
-    if FORMAT == "web":
-        redview.FORMAT = "markmap"
-        redview.generate_doc()
-        redview = RedviewGenerator("md", src, dest, script_dir, dir_to_exclude, exclude_hidden_dir, mainTags)
-        redview.dest_to_data()
     redview.generate_doc()
+    
+    if args.watcher:
+        w = Watcher(redview)
+        w.run()
 
 if __name__ == '__main__':
     main()

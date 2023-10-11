@@ -1,0 +1,21 @@
+services:
+  app:
+    build: 
+      context: ./
+      target: redview_base
+    container_name: 'redview'
+    init: true
+    volumes:
+      - type: "bind"
+        source: /home/kali/Desktop/R2TI
+        target: /var/redview
+        read_only: true
+    expose:
+      - 3000
+    ports:
+      - "127.0.0.1:3000:3000"
+    restart: always
+
+
+volumes:
+  redview-src:

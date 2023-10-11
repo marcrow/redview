@@ -9,6 +9,7 @@ from os import makedirs
 from shutil import rmtree
 import shutil
 import re
+import traceback
 from os.path import isfile, join
 import argparse
 import textwrap
@@ -17,20 +18,35 @@ from src.md_redview import MarkdownGetter, MarkdownWritter
 from src.ascii_redview import AsciidocGetter, AsciidocWritter
 
 class Directory_Processor:
-    def __init__(self, FORMAT : str, src : str, dest : str, ROOT_DEST : str, script_dir : str, child_dir : list, dir_to_exclude : list, mainTags : list, real_path : str):
+    def __init__(self, FORMAT : str, src : str, dest : str, ROOT_DEST : str, script_dir : str, dir_to_exclude : list, mainTags : list, real_path : str, exclude_hidden_dir : bool):
         self.script_dir = script_dir
         self.dir_to_exclude = dir_to_exclude
         self.FORMAT = FORMAT
         self.src = src 
         self.dest = dest
         self.ROOT_DEST = ROOT_DEST
-        self.child_dir = child_dir
+        self.exclude_hidden_dir = exclude_hidden_dir
+        self.child_dir = []
+        try:
+            self.child_dir = self.get_directories()
+        except Exception:
+            traceback.print_exc()
+            pass 
+        
         self.mainTags = mainTags
         self.real_path = real_path
 
-    # Create subdirectories based on child_dir from self().
+    
+    def get_directories(self):
+        directories = [f for f in listdir(self.src) if not isfile(join(self.src, f)) and not f in self.dir_to_exclude]
+        if self.exclude_hidden_dir : 
+            return [item  for item in directories if not (item.startswith("."))]
+        else:
+            return [item  for item in directories]
+
+    # Create subdirectories section based on child_dir from self().
     # Return text with links to all subdirectories
-    def create_sub_dir(self):
+    def create_sub_dir_section(self):
         text = ""
         for directory in self.child_dir:
             directory = directory.replace(self.ROOT_DEST,"")
@@ -168,31 +184,10 @@ class Directory_Processor:
                     line = "- ["+f+"]"+"(./"+f.replace(".adoc",".html")+"), \n"
             text = text + line
         return text
-
-    def generate_readme(self):
-        files = self.get_files()
-        content=self.get_content_struct() 
-        file_list = []
-        summary=""
-        yaml = ""
-        markdown_text = ""
-        text_sub_dir = self.create_sub_dir()
-        #Copy every files + load titles + add md toc
-        for cfile in files :
-            if cfile[-3:] == ".md":
-                markdown_getter = MarkdownGetter(self.FORMAT, self.src , self.dir_to_exclude , self.mainTags, self.real_path) 
-                markdown_writter = MarkdownWritter(self.FORMAT, self.dest, self.ROOT_DEST,  self.mainTags, self.real_path)
-                markdown_writter.process_markdown_file(cfile, content, markdown_getter)
-            elif cfile[-5:] == ".adoc" and cfile.lower() != "readme.adoc":
-                asciidocGetter = AsciidocGetter(self.FORMAT, self.src , self.dir_to_exclude , self.mainTags, self.real_path)
-                asciidocWritter = AsciidocWritter(self.FORMAT, self.dest, self.ROOT_DEST,  self.mainTags, self.real_path)
-                asciidocWritter.process_asciidoc_file(cfile, content, asciidocGetter)
-            else:
-                dest = self.dest+cfile.replace(" ","-")
-                if not path.isfile(dest):
-                    shutil.copy(self.src+cfile, dest)
-            file_list.append(cfile)
-        
+    
+    # used by generate_readme to generate the content of summarysc
+    def generate_readme_content(self, content, files):
+        text_sub_dir = self.create_sub_dir_section()
         text = "" 
         if self.FORMAT == "markmap":
             with open(self.real_path+"/export/web/ressources/template.html", "r") as tf: 
@@ -221,3 +216,40 @@ class Directory_Processor:
                 summaryFilename = self.dest.split("/")[-1] + ".md"
         with open(self.dest+summaryFilename,'w') as wfile:
             wfile.write(text)
+
+
+    def generate_readme(self):
+        files = self.get_files()
+        content=self.get_content_struct() 
+        file_list = []
+        #Copy every files + load titles + add md toc
+        for cfile in files :
+            if cfile[-3:] == ".md":
+                markdown_getter = MarkdownGetter(self.FORMAT, self.src , self.dir_to_exclude , self.mainTags, self.real_path) 
+                markdown_writter = MarkdownWritter(self.FORMAT, self.dest, self.ROOT_DEST,  self.mainTags, self.real_path)
+                markdown_writter.process_markdown_file(cfile, content, markdown_getter)
+            elif cfile[-5:] == ".adoc" and cfile.lower() != "readme.adoc":
+                asciidocGetter = AsciidocGetter(self.FORMAT, self.src , self.dir_to_exclude , self.mainTags, self.real_path)
+                asciidocWritter = AsciidocWritter(self.FORMAT, self.dest, self.ROOT_DEST,  self.mainTags, self.real_path)
+                asciidocWritter.process_asciidoc_file(cfile, content, asciidocGetter)
+            else:
+                dest = self.dest+cfile.replace(" ","-")
+                if not path.isfile(dest):
+                    is_ignored = False
+                    for ignnore_type in [".swp",".swx", "swpx"]:
+                        if dest.endswith(ignnore_type):
+                            is_ignored=True
+                    if not is_ignored:        
+                        shutil.copy(self.src+cfile, dest)
+            file_list.append(cfile)
+        if self.FORMAT == "web":
+            self.FORMAT="markmap"
+            self.generate_readme_content(content, files)
+            self.FORMAT="md"
+            self.generate_readme_content(content, files)
+            self.FORMAT = "web"
+        else:
+            self.generate_readme_content(content, files)
+            
+        
+        

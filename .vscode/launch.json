@@ -11,7 +11,8 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": "-s /home/kali/Desktop/R2TI/"
+            "args": "-s ../cours_test_intrusion"
+            // "args": "-s /tmp/test/data -p /tmp/ -n voila -w"
         }
     ]
 }

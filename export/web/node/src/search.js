@@ -28,16 +28,20 @@ exports.searchFiles = (req, res) => {
   if (searchQuery.includes('>here')) {
     searchFromCurrentDir = true;
     searchQuery = searchQuery.replace('>here', '').trim();
+    if(currentDirectory === ""){
+      currentDirectory = "/";
+    }
+    console.log(currentDirectory)
     if (currentDirectory.endsWith('.html') || currentDirectory.endsWith('.md')) {
       let currentDirectory = path.dirname(currentDirectory);
     }
-    if (!currentDirectory || !/^[\w/.]+$/.test(currentDirectory) || currentDirectory.includes("..")) {
+    if ( !/^[\w/.]+$/.test(currentDirectory) || currentDirectory.includes("..")) {
       res.status(400).json({ error: 'Le répertoire courant est invalide.' });
       return;
     }
   }
 
-  const folderPath = searchFromCurrentDir ? process.env.PWD + "/data/" + currentDirectory : process.env.PWD;
+  const folderPath = searchFromCurrentDir ? process.env.PWD + "/data/" + currentDirectory : process.env.PWD + "/data";
   if (!path.resolve(folderPath).startsWith(process.env.PWD)) {
     console.error("lfi attempt via " + folderPath);
     res.status(400).json({ error: 'La requête de recherche est invalide.' });
@@ -65,6 +69,7 @@ exports.searchFiles = (req, res) => {
 
 
 function searchInDirectory(directoryPath, searchQuery, searchInTitles, unique) {
+  console.log(directoryPath)
   return new Promise((resolve, reject) => {
     fs.readdir(directoryPath, (err, files) => {
       if (err) {
@@ -136,8 +141,8 @@ function searchInMd(filePath, searchQuery, searchInTitles, unique) {
       let isSummary = false;
       const matchingLines = [];
 
-      lines.forEach((line, index) => {
-        line = line.toLowerCase();
+      for (let index = 0; index < lines.length; index++) {
+        let line = lines[index].toLowerCase();
         if (isYaml) { // used in the future to search by tag
           if (line == "---") { // end of yaml
             isYaml = false;
@@ -171,9 +176,7 @@ function searchInMd(filePath, searchQuery, searchInTitles, unique) {
         if (!ignore) {
           if (line.includes(searchQuery.toLowerCase())) {
             if (!line.includes("[") && !line.includes(")")) {
-              if (unique) {
-                ignore = true;
-              }
+              
               matchingLines.push({
                 file: filePath.replace( process.env.PWD + "/data", ""),
                 line: index + 1,
@@ -181,10 +184,13 @@ function searchInMd(filePath, searchQuery, searchInTitles, unique) {
                 nearTitle,
                 currentTitle,
               });
+              if (unique) {
+                break;
+              }
             }
           }
         }
-      });
+      }
       resolve(matchingLines);
     });
   });
@@ -207,8 +213,8 @@ function searchInAsciidoc(filePath, searchQuery, searchInTitles, unique) {
       let isSummary = false;
       const matchingLines = [];
 
-      lines.forEach((line, index) => {
-        line = line.toLowerCase();
+      for (let index = 0; index < lines.length; index++) {
+        let line = lines[index].toLowerCase();
         //no yaml in asciidoc
 
         if (line.includes("__Summary :__ ")) { // ignore content in summary
@@ -233,10 +239,6 @@ function searchInAsciidoc(filePath, searchQuery, searchInTitles, unique) {
         if (!ignore) {
           if (line.includes(searchQuery.toLowerCase())) {
             if (!line.includes("[") && !line.includes(")")) {
-              if (unique) {
-                ignore = true;
-              }
-
               matchingLines.push({
                 file: filePath.replace( process.env.PWD + "/data", ""),
                 line: index + 1,
@@ -244,10 +246,13 @@ function searchInAsciidoc(filePath, searchQuery, searchInTitles, unique) {
                 nearTitle,
                 currentTitle,
               });
+              if (unique) {
+                break;
+              }
             }
           }
         }
-      });
+      }
       resolve(matchingLines);
     });
   });
