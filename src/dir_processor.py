@@ -172,7 +172,7 @@ class Directory_Processor:
             text = "## Associated files\n"
         for f in files:
             f = f.replace(" ","-") 
-            if f == "index.html" or f.lower() == "readme.md": 
+            if f == "index.html" or f.lower() == "summary.md": 
                 continue
             line = "- ["+f+"]"+"(./"+f+"), \n"
             if self.FORMAT=="markmap" and f[-3:] == ".md": # Use to stay on markmap preview if a md file is open
@@ -185,8 +185,8 @@ class Directory_Processor:
             text = text + line
         return text
     
-    # used by generate_readme to generate the content of summarysc
-    def generate_readme_content(self, content, files):
+    # used by generate_dir_summary to generate the content of summarysc
+    def generate_dir_summary_content(self, content, files):
         text_sub_dir = self.create_sub_dir_section()
         text = "" 
         if self.FORMAT == "markmap":
@@ -205,8 +205,8 @@ class Directory_Processor:
         if self.FORMAT != "markmap":
             text = text + self.add_associated_files(files)
         summaryFilename = ""
-        if self.FORMAT == "md":
-            summaryFilename = "Readme.md"
+        if self.FORMAT == "md" or self.FORMAT == "web":
+            summaryFilename = "summary.md"
         elif self.FORMAT == "markmap":
             summaryFilename = "index.html"
         else:
@@ -218,7 +218,7 @@ class Directory_Processor:
             wfile.write(text)
 
 
-    def generate_readme(self):
+    def generate_dir_summary(self):
         files = self.get_files()
         content=self.get_content_struct() 
         file_list = []
@@ -228,7 +228,7 @@ class Directory_Processor:
                 markdown_getter = MarkdownGetter(self.FORMAT, self.src , self.dir_to_exclude , self.mainTags, self.real_path) 
                 markdown_writter = MarkdownWritter(self.FORMAT, self.dest, self.ROOT_DEST,  self.mainTags, self.real_path)
                 markdown_writter.process_markdown_file(cfile, content, markdown_getter)
-            elif cfile[-5:] == ".adoc" and cfile.lower() != "readme.adoc":
+            elif cfile[-5:] == ".adoc" and cfile.lower() != "summary.adoc":
                 asciidocGetter = AsciidocGetter(self.FORMAT, self.src , self.dir_to_exclude , self.mainTags, self.real_path)
                 asciidocWritter = AsciidocWritter(self.FORMAT, self.dest, self.ROOT_DEST,  self.mainTags, self.real_path)
                 asciidocWritter.process_asciidoc_file(cfile, content, asciidocGetter)
@@ -244,12 +244,12 @@ class Directory_Processor:
             file_list.append(cfile)
         if self.FORMAT == "web":
             self.FORMAT="markmap"
-            self.generate_readme_content(content, files)
+            self.generate_dir_summary_content(content, files)
             self.FORMAT="md"
-            self.generate_readme_content(content, files)
+            self.generate_dir_summary_content(content, files)
             self.FORMAT = "web"
         else:
-            self.generate_readme_content(content, files)
+            self.generate_dir_summary_content(content, files)
             
         
         

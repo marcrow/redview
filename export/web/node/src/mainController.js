@@ -181,7 +181,7 @@ function generateMarkdownWithSummary(filepath) {
           let content = escapeBadChar(data);
           const parsedContent = extractYamlAndMarkdown(content);
           let markdownContent = parsedContent[1];
-          if (path.basename(filepath) === "Readme.md"){
+          if (path.basename(filepath) === "summary.md"){
             resolve(markdownContent);
           }
           else{
@@ -392,7 +392,7 @@ const index = (req, res) => {
   const extension = path.extname(filePath);
   if (extension === "") {
     console.log("empty");
-    filePath = filePath + "Readme.md";
+    filePath = filePath + "summary.md";
   }
 
   const is_valid = validateInput(filePath);

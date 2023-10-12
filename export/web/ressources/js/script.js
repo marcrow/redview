@@ -242,10 +242,55 @@ function clean_search_div(){
 }
 
 
+function searchHelp(){
+  const resultsContainer = document.getElementById('searchResults');
+  resultsContainer.innerHTML = '';
+
+  const remove_button = document.createElement('div');
+  remove_button.className = 'div_search_header';
+  remove_button.innerHTML = `
+  <button class="remove_button" onclick="clean_search_div()">
+    <svg viewBox="0 0 448 512" class="svgIcon">
+      <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z">
+      </path>
+    </svg>
+  </button>
+  `;
+  resultsContainer.appendChild(remove_button);
+  const resultContainer = document.createElement('div');
+  resultContainer.className = 'result, card';
+
+  const fileLink = document.createElement('a');
+  fileLink.className = "card1";
+  //fileLink.textContent = result.file;
+  resultContainer.appendChild(fileLink);
+
+  const currentTitleElement = document.createElement('p');
+  currentTitleElement.innerHTML = `<strong><big>Help<big></strong><br/><br/>`;
+  fileLink.appendChild(currentTitleElement);
+
+  const lineElement = document.createElement('p');
+  lineElement.innerHTML = `
+  The search field lets you search for files based on their content.<br/>
+  A number of options are available and can be combined. All option start with '>'.<br/>
+  - <strong>>title</strong> allows you to limit the search to the titles of markdown and asciidoc files.<br/>
+  - <strong>>unique</strong> returns only the first occurrence of a file. If the term occurs several times in the file, only the first result will be returned.<br/>
+  - <strong>>here</strong> allows you to search from the current directory.`;
+  lineElement.className = "small";
+  fileLink.appendChild(lineElement);
+
+  resultsContainer.appendChild(resultContainer);
+
+}
+
 
 // Fonction pour effectuer la recherche textuelle côté client
 function searchFiles() {
   const query = document.getElementById('searchQuery').value;
+  if (query.includes(">help")){
+    searchHelp();
+    return;
+  }
   const url = `/search?query=${encodeURIComponent(query)}&directory=${encodeURIComponent(getCurrentDirectory())}`;
   fetch(url)
     .then(response => {

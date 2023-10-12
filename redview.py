@@ -62,18 +62,18 @@ class Handler(FileSystemEventHandler):
         dest_directory = path.dirname(dest_file)
         # print("dest_directory "+ dest_directory)
         # print("dest_file "+ dest_file)
-        #targetReadme = clean_end_path(event.src_path)
+        #targetsummary = clean_end_path(event.src_path)
         targetDir = clean_end_path(dest_directory)
         # if not event.is_directory:
-        targetReadme = clean_end_path(path.dirname(event.src_path))
+        targetsummary = clean_end_path(path.dirname(event.src_path))
         #targetDir = clean_end_pathpath(dest_directory)
         if event.event_type == "created" :
             # when directory is created
             if event.is_directory:
                 print("create dir "+dest_file)
                 makedirs(dest_file, exist_ok=True)
-#----- Add code here to generate empty readme in the new directory TBD ------
-                # targetReadme = clean_end_path(path.dirname(event.src_path))
+#----- Add code here to generate empty summary in the new directory TBD ------
+                # targetsummary = clean_end_path(path.dirname(event.src_path))
             # when file is created
             else:
                 print("create symlink "+dest_file)
@@ -101,7 +101,7 @@ class Handler(FileSystemEventHandler):
                     print(f"Unexpected {err=}, {type(err)=}")
                     return
             
-            if not path.exists(targetReadme):
+            if not path.exists(targetsummary):
                 print("parent directory also deleted")
                 return
             dest_file = dest_directory
@@ -109,16 +109,16 @@ class Handler(FileSystemEventHandler):
         # when directories are created or suppressed
         if event.event_type != "modified" and event.is_directory :
             #targetDir = clean_end_path(dest_file)
-            print("generate readme "+targetReadme+ " to "+targetDir)
-            dir_processor = Directory_Processor(self.redviewGenerator.FORMAT, targetReadme, targetDir, self.redviewGenerator.ROOT_DEST, self.redviewGenerator.script_dir, self.redviewGenerator.dir_to_exclude, self.redviewGenerator.mainTags, self.redviewGenerator.real_path, self.redviewGenerator.exclude_hidden_dir)
-            dir_processor.generate_readme()
+            print("generate summary "+targetsummary+ " to "+targetDir)
+            dir_processor = Directory_Processor(self.redviewGenerator.FORMAT, targetsummary, targetDir, self.redviewGenerator.ROOT_DEST, self.redviewGenerator.script_dir, self.redviewGenerator.dir_to_exclude, self.redviewGenerator.mainTags, self.redviewGenerator.real_path, self.redviewGenerator.exclude_hidden_dir)
+            dir_processor.generate_dir_summary()
         # when files are modified, created and suppressed. 
         # If creation is excluded from the condition definition, this is because every file creation event is followed by a file modification event.
         # And we don't want to duplicate generate_me calls for nothing
         if event.event_type != "created" and not event.is_directory :
-            print("generate readme "+targetReadme+ " to "+targetDir)
-            dir_processor = Directory_Processor(self.redviewGenerator.FORMAT, targetReadme, targetDir, self.redviewGenerator.ROOT_DEST, self.redviewGenerator.script_dir, self.redviewGenerator.dir_to_exclude, self.redviewGenerator.mainTags, self.redviewGenerator.real_path, self.redviewGenerator.exclude_hidden_dir)
-            dir_processor.generate_readme()
+            print("generate summary "+targetsummary+ " to "+targetDir)
+            dir_processor = Directory_Processor(self.redviewGenerator.FORMAT, targetsummary, targetDir, self.redviewGenerator.ROOT_DEST, self.redviewGenerator.script_dir, self.redviewGenerator.dir_to_exclude, self.redviewGenerator.mainTags, self.redviewGenerator.real_path, self.redviewGenerator.exclude_hidden_dir)
+            dir_processor.generate_dir_summary()
 
         print("Event occurred: ", event.event_type, event.src_path, path.dirname(event.src_path))
 
@@ -191,7 +191,7 @@ class RedviewGenerator:
 
     def generate_doc(self):
         dir_processor = Directory_Processor(self.FORMAT, self.src, self.dest, self.ROOT_DEST, self.script_dir ,self.dir_to_exclude, self.mainTags, self.real_path, self.exclude_hidden_dir)
-        dir_processor.generate_readme()
+        dir_processor.generate_dir_summary()
         for directory in dir_processor.child_dir:
             self.src = clean_end_path(self.src+"/"+directory)
             self.dest = clean_end_path(self.dest+"/"+directory.replace(" ","_"))

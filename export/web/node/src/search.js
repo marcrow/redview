@@ -96,14 +96,14 @@ function searchInDirectory(directoryPath, searchQuery, searchInTitles, unique) {
                   resolve();
                 })
                 .catch(error => reject(error));
-            } else if (stats.isFile() && path.extname(file).toLowerCase() === '.md' && path.basename(file).toLocaleLowerCase() != "readme.md") {
+            } else if (stats.isFile() && path.extname(file).toLowerCase() === '.md' && path.basename(file).toLocaleLowerCase() != "summary.md") {
               searchInMd(filePath, searchQuery, searchInTitles, unique)
                 .then(results => {
                   matchingFiles.push(...results);
                   resolve();
                 })
                 .catch(error => reject(error));
-              } else if (stats.isFile() && path.extname(file).toLowerCase() === '.adoc' && path.basename(file).toLocaleLowerCase() != "readme.adoc") {
+              } else if (stats.isFile() && path.extname(file).toLowerCase() === '.adoc' && path.basename(file).toLocaleLowerCase() != "summary.adoc") {
                 searchInAsciidoc(filePath, searchQuery, searchInTitles, unique)
                   .then(results => {
                     matchingFiles.push(...results);

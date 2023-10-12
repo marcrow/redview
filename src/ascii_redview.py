@@ -259,11 +259,12 @@ class AsciidocWritter:
         yaml = ""
         asciidoc_text = ""
         ocfile = cfile
-        #For readme file, if it's possible rename them as the directory name
-        if cfile.lower() == "readme.md" :
-            cfile = path.basename(path.dirname(asciidoc_getter.src)) + ".md"
-            if path.isfile(asciidoc_getter.src+cfile):
-                return
+        #For summary file, if it's possible rename them as the directory name
+        if cfile.lower() == "summary.md" :
+            return
+            # cfile = path.basename(path.dirname(asciidoc_getter.src)) + ".md"
+            # if path.isfile(asciidoc_getter.src+cfile):
+            #     return
         cfile = cfile.replace(" ", "-")
         
         yaml, asciidoc_text = asciidoc_getter.parse_asciidoc_file(asciidoc_getter.src+ocfile)
@@ -277,7 +278,8 @@ class AsciidocWritter:
         except shutil.SameFileError:
             print(self.dest+cfile+" File already exists")
             pass
-        else:
-            print("Issue ignored for "+self.dest+cfile+" copy")
+        except Exception as e:
+            print("Issue ignored for "+self.dest+cfile + " : "+e)
             pass
+
 

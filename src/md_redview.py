@@ -310,11 +310,12 @@ class MarkdownWritter:
         markdown_text = ""
         ocfile = cfile
         cfile = cfile.replace(" ", "-")
-        #For readme file, if it's possible rename them as the directory name
-        if cfile.lower() == "readme.md" :
-            cfile = path.basename(path.dirname(markdown_getter.src)) + ".md"
-            if path.isfile(markdown_getter.src+cfile):
-                return
+        #For summary file, if it's possible rename them as the directory name
+        if cfile.lower() == "summary.md" :
+            return
+            # cfile = path.basename(path.dirname(markdown_getter.src)) + ".md"
+            # if path.isfile(markdown_getter.src+cfile):
+            #     return
         #summary = markdown_getter.generate_summary(markdown_getter.src+ocfile, cfile, phases) # and get phase
         yaml, markdown_text = markdown_getter.parse_markdown_file(markdown_getter.src+ocfile)
         titles = markdown_getter.extract_titles(markdown_text)
@@ -345,6 +346,6 @@ class MarkdownWritter:
         except shutil.SameFileError:
             print(self.dest+cfile+" File already exists")
             pass
-        else:
-            print("Issue ignored for "+self.dest+cfile+" copy")
+        except Exception as e:
+            print("Issue ignored for "+self.dest+cfile + " : "+e)
             pass
