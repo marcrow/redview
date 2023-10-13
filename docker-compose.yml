@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile.python
     container_name: 'processor'
     volumes:
-      - /home/kali/Desktop/R2TI:/data:ro
+      - /tmp/notes:/data:ro
       - shared:/shared:rw
 
   web:
