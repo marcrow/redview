@@ -279,7 +279,7 @@ function asciiToMarkmap(filePath, res){
 function validateInput(filePath) {
 doesExist = fs.existsSync(filePath);
 if (doesExist) {
-    if (!path.resolve(filePath).startsWith(process.env.PWD)) {
+    if (!path.resolve(filePath).startsWith(process.cwd())) {
     console.error("lfi attempt via " + filePath);
     return false;
     }
@@ -352,7 +352,7 @@ function extractFileType(filename) {
 
 function otherFilesResponder(req, res){
     const url = decodeURIComponent(req.url);
-    let filePath = path.join(process.env.PWD, url);
+    let filePath = path.join(process.cwd(), url);
     const type = extractFileType(filePath);
     if(isFileTypeSupported(type)){
         return generateSupportedContent(type, filePath,req, res)
@@ -367,7 +367,7 @@ function otherFilesResponder(req, res){
 
 const resources = (req,res) => {
   const url = decodeURIComponent(req.url);
-  let filePath = path.join(process.env.PWD, url);
+  let filePath = path.join(process.cwd(), url);
   const is_valid = validateInput(filePath);
   if (!is_valid && extension != ".html") { //except html because markmap from adoc is generate in real-time
       return res.status(404).send('File not found.'+extension);
@@ -378,7 +378,7 @@ const resources = (req,res) => {
 
 const index = (req, res) => {
   const url = decodeURIComponent(req.url);
-  let filePath = path.join(process.env.PWD, "/data");
+  let filePath = path.join(process.cwd(), "/data");
   filePath = path.join(filePath, url);
 
   // if (!is_valid) {

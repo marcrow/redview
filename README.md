@@ -17,6 +17,7 @@ Sometimes you have so much data that you're lost because you don't know what's i
 - Node JS web server to preview md as a mindmap with markmap.
 - No internet connexion required
 - Format web md preview, markmap, md for obsidian (optimized for graph visualization)
+- Use docker
 
 + Configuraiton via yaml and .env file 😊
 
@@ -36,21 +37,46 @@ Sometimes you have so much data that you're lost because you don't know what's i
 You may found other use case of this project.
     
 ## How it works
+Old way : 
 When you run the python script a copy of the project is created in the directory provide in argument (/tmp/redview by default). In this new directory, summary are added at the top of each files and directory summary are created for each directory. In addition html file are created for markmap preview.
 
+New way :
+Run docker-compose and a clone of the /tmp/notes will be created  with directory summary and a fency web interface to read your notes and markmap of them.
 
 ## How to use it
 I provide an example of md structure to help you to test the tool and to provide concrete examples.
 
 ### How to start
 #### Requirement
+Old way :
 Install nodejs, npm and python.
 ```bash
 sudo apt install node python3 npm
 ```
 I have to define depandency to install :/
 
+New way :
+Install docker et docker-compose
+
 #### Start
+New way :
+Just use docker and docker-compose.  
+Put your notes in /tmp/notes on your system (not recommended) or modify the docker-compose.yml to change /tmp/note by your working directory.
+Before the first usage (internet connection required) : 
+```bash
+docker-compose build
+```
+
+Start the redview (no internet connection required):
+```bash
+docker-compose start
+```
+
+visit http://127.0.0.1:3000
+
+
+Old way :
+
 Redview work on every markdown directory tree. 
 In the redview directory :
 ```bash

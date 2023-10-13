@@ -41,14 +41,14 @@ exports.searchFiles = (req, res) => {
     }
   }
 
-  const folderPath = searchFromCurrentDir ? process.env.PWD + "/data/" + currentDirectory : process.env.PWD + "/data";
-  if (!path.resolve(folderPath).startsWith(process.env.PWD)) {
+  const folderPath = searchFromCurrentDir ? process.cwd() + "/data/" + currentDirectory : process.cwd() + "/data";
+  if (!path.resolve(folderPath).startsWith(process.cwd())) {
     console.error("lfi attempt via " + folderPath);
     res.status(400).json({ error: 'La requête de recherche est invalide.' });
     return false;
   }
 
-  // const folderPath = process.env.PWD;
+  // const folderPath = process.cwd();
 
   searchInDirectory(folderPath, searchQuery, searchInTitles, unique)
     .then(matchingFiles => {
@@ -178,7 +178,7 @@ function searchInMd(filePath, searchQuery, searchInTitles, unique) {
             if (!line.includes("[") && !line.includes(")")) {
               
               matchingLines.push({
-                file: filePath.replace( process.env.PWD + "/data", ""),
+                file: filePath.replace( process.cwd() + "/data", ""),
                 line: index + 1,
                 content: line.trim().slice(0, 130) + "...",
                 nearTitle,
@@ -240,7 +240,7 @@ function searchInAsciidoc(filePath, searchQuery, searchInTitles, unique) {
           if (line.includes(searchQuery.toLowerCase())) {
             if (!line.includes("[") && !line.includes(")")) {
               matchingLines.push({
-                file: filePath.replace( process.env.PWD + "/data", ""),
+                file: filePath.replace( process.cwd() + "/data", ""),
                 line: index + 1,
                 content: line.trim().slice(0, 130) + "...",
                 nearTitle,

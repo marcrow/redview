@@ -1,18 +1,11 @@
 #!/usr/bin/python3
 # Test
 from os import mkdir
-from os import rmdir
 from os import path
 from os import listdir
-from os import walk
-from os import makedirs
-from shutil import rmtree
 import shutil
-import re
 import traceback
 from os.path import isfile, join
-import argparse
-import textwrap
 from src.utils import *
 from src.md_redview import MarkdownGetter, MarkdownWritter
 from src.ascii_redview import AsciidocGetter, AsciidocWritter

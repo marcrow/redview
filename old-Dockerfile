@@ -1,0 +1,19 @@
+FROM debian:stable-slim as redview_base
+
+RUN apt-get update -yq \
+&& apt-get install nodejs python3 python3-yaml npm -yq \
+&& apt-get clean -y \
+&& mkdir /var/r2ti
+
+ADD . /app/
+ADD ./export/web /var/www/
+
+WORKDIR /var/www
+RUN npm init -y \
+&&  npm install express showdown fs path dotenv asciidoctor downdoc \
+&& npm audit fix --force 
+
+EXPOSE 3000
+
+
+CMD cd /app; python3 redview.py -s /var/redview -p /var/www/ -n redview; cd /var/www/redview; node server.js
