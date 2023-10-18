@@ -38,6 +38,7 @@ You may found other use case of this project.
     
 ## How it works
 ### Old way : 
+![Standard description](./images/standard_description.svg)  
 When you run the python script a copy of the project is created in the directory provide in argument (/tmp/redview by default). In this new directory, summary are added at the top of each files and directory summary are created for each directory. In addition html file are created for markmap preview.
 
 ### New way :

@@ -1,0 +1,34 @@
+title: Standard description {
+    near: top-center
+    shape: text
+    style: {
+      font-size: 29
+      bold: true
+      underline: true
+    }
+  }
+  Your system: {style.font-color: blue}
+  Your system.Your directory
+  Your system.redview
+  Your system./clone
+  Your system./clone.nodeServer
+  Your system./clone./data
+  
+  Your system.redview -> Your system.Your directory -> Your system./clone./data: Clone and update {style.animated: true; style.stroke: green; style.font-color: green}
+  Your system.redview -> Your system./clone.nodeServer: Generate {style.animated: true; style.stroke: green; style.font-color: green}
+  Your system./clone.nodeServer -> Your system./clone./data: Read {style.animated: true; style.stroke: red; style.font-color: red}
+  Your system./clone.nodeServer -> Your system./clone.nodeServer: Add sumary & \ngenerate markmap {style.animated: true; style.stroke: red; style.font-color: red}
+  
+  explanation: |md
+    # How it works ?
+    ## Redview
+    Is the python script in charge of:
+      - Creates a clone of your directory.
+      - Watches for changes and reflects them on the clone directory.
+      - (Re-)Generates directory summary
+    ## Node server
+      - Delivers your notes with summary
+      - Generates markmap file
+      - Generate asciidoc and markdown preview
+  | {near: bottom-center}
+  

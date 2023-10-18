@@ -17,7 +17,7 @@ Your system.Your directory -> Your system.volumes./data: Read only mount {style.
 
 Your system.Docker.python -> Your system.volumes./data -> Your system.volumes./clone: Clone and update {style.animated: true; style.stroke: green; style.font-color: green}
 Your system.Docker.node -> Your system.volumes./clone -> Your system.volumes./data: Read {style.animated: true; style.stroke: red; style.font-color: red}
-
+Your system.Docker.node -> Your system.Docker.node : Add sumary & \ngenerate markmap  {style.animated: true; style.stroke: red; style.font-color: red}
 explanation: |md
   # How it works ?
   ## Python docker
@@ -25,7 +25,7 @@ explanation: |md
     - Watches for changes and reflects them on the cloned directory.
     - (Re-)Generates directory summary.
   ## Node docker
-    - Delivers your notes.
+    - Delivers your notes with summary.
     - Generates markmap file.
     - Generates asciidoc and markdown preview.
 | {near: bottom-center}
