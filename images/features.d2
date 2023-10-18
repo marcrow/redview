@@ -1,0 +1,53 @@
+title: Redview features {
+    near: top-center
+    shape: text
+    style: {
+      font-size: 29
+      bold: true
+      underline: true
+    }
+}
+direction: right
+
+redview : {
+    style.font-color: white
+    style.stroke: red
+    style.fill: black
+    style.border-radius: 999
+}
+markmap : Mindmap / Markmap{
+    shape:image
+    icon:./image1.png
+    width: 300
+    height: 400
+}
+markdown : Markdown preview{
+    shape:image
+    icon:./image2.png
+    width: 300
+    height: 400
+}
+summary : Directory summary {
+    shape:image
+    icon:./image4.png
+    width: 300
+    height: 400
+}
+
+search : Directory summary {
+    shape:image
+    icon:./image5.png
+    width: 300
+    height: 400
+}
+
+
+
+redview -> markmap : Mindmap from \nyour md and adoc notes {style.animated: true; style.stroke: black; style.font-color: black}
+redview -> markdown : Markdown and asciidoc preview {style.animated: true; style.stroke: black; style.font-color: black}
+redview -> summary : Directory summary \nto never be lost in a directory {style.animated: true; style.stroke: black; style.font-color: black}
+redview -- summary : Sort summary directory \nbased on tiltes in md and adoc files,\n and on tags  {style.animated: true; style.stroke: black; style.font-color: black}
+redview -> redview : Watches for changes and update {style.animated: true; style.stroke: black; style.font-color: black}
+redview -> search : Find what you want {style.animated: true; style.stroke: black; style.font-color: black}
+
+
