@@ -10,12 +10,13 @@ View markdown file tree in a fancy web interface with two display modes : github
 ## Features
 - Create summary at the top of each md file.
 - Create md summary file in each directory to link md files together.
-- Node JS web server to preview md like in github or you can also add your own style.
+- Node JS web server to preview md and asciidoc like in github or you can also add your own style.
 - Search feature with search filter on the web server to find specific content in md note.
-- Node JS web server to preview md as a mindmap with markmap.
+- Node JS web server to preview md and asciidoc as a mindmap with markmap.
 - No internet connexion required
-- Format web md preview, markmap, md for obsidian (optimized for graph visualization)
+- Format web md/asciidoc preview, markmap, md for obsidian (optimized for graph visualization)
 - Use docker !
+- Automatic update : if a ressources has been created, modified or deleted, it will be automatically updated for the web interface and the directory summary will also be updated.
 
 + Configuraiton via yaml and .env file 😊
 
@@ -70,7 +71,7 @@ docker-compose build
 
 Start the redview (no internet connection required):
 ```bash
-docker-compose start
+docker-compose up
 ```
 
 visit http://127.0.0.1:3000
@@ -170,15 +171,16 @@ Search in the directory tree from your position in the markdown preview.
 ```text
 >unique searchString
 ```
-If found an occurence of searchString in a file return the result and search into the next file.  
+If found an occurence of searchString in a file return the result and search into the next file.
+
+These options can be used together.  
 
 ### How to pimp the web interface
 In the /export/web/.env file you can change the css for the web page (may you want to switch to light mode), or add restricted files and directory.
 
-## How it will works (in the future)
-In addition of the current usage, redview will be able to automatically update modification from the original working directory.   
-Search based on tags set in yaml at the the top of md files.  
-Update your sql db from your md note and vice versa.
+## How it will works (in the future)   
+1. Search based on tags set in yaml at the the top of md files.  
+2. Update your sql db from your md note and vice versa.
 
 # Issue 
 1. hacktricks image links
