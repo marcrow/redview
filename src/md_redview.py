@@ -2,6 +2,7 @@ import shutil
 import re
 from src.ascii_redview import AsciidocGetter, AsciidocWritter
 from src.utils import *
+from os import symlink
 
 
 # npm init -y; npm install express showdown fs path dotenv; node server.js
@@ -332,10 +333,21 @@ class MarkdownWritter:
         #             df.write("</script></div><span id='source' hidden='hidden'>.md</span></body></html>")
 
         try:
-            shutil.copy(markdown_getter.src+ocfile, self.dest+cfile)
-        except shutil.SameFileError:
-            print(self.dest+cfile+" File already exists")
-            pass
-        except Exception as e:
-            print("Issue ignored for "+self.dest+cfile + " : "+e)
-            pass
+            target = markdown_getter.src+ocfile
+            location = self.dest+cfile
+            symlink(target,location)
+        except FileExistsError:
+            print(location  +" FileExistsError -> skipped")
+            return
+        except Exception as err:
+            print(f"Unexpected {err=}, {type(err)=}")
+            return 
+
+        # try:
+        #     shutil.copy(markdown_getter.src+ocfile, self.dest+cfile)
+        # except shutil.SameFileError:
+        #     print(self.dest+cfile+" File already exists")
+        #     pass
+        # except Exception as e:
+        #     print("Issue ignored for "+self.dest+cfile + " : "+e)
+        #     pass

@@ -11,4 +11,4 @@ RUN npm init -y \
 
 EXPOSE 3000
 
-CMD  ls /shared; node server.js
+CMD  ls /clone; node server.js

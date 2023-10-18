@@ -45,7 +45,13 @@ class Directory_Processor:
             directory = directory.replace(self.ROOT_DEST,"")
             directory = directory.replace(" ","_")
             if not path.exists(self.dest+directory):
-                mkdir(self.dest+directory)
+                try:
+                    mkdir(self.dest+directory)
+                except FileExistsError:
+                    print("Directory already exist "+self.dest+directory)
+                except Exception as err:
+                    print(f"Unexpected {err=}, {type(err)=}")
+                    return
             # title = "["+Directory+"]("+path+directory+"/)"
             if self.FORMAT == "markmap":
                 text = text + "- " + self.format_link(directory,"./"+directory+"/index.html")+"  \n"

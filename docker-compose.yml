@@ -5,8 +5,8 @@ services:
       dockerfile: Dockerfile.python
     container_name: 'processor'
     volumes:
-      - /tmp/notes:/data:ro
-      - shared:/shared:rw
+      - ${VOLUME_SOURCE}:/data:ro
+      - clone:/clone:rw
 
   web:
     build:
@@ -14,9 +14,10 @@ services:
       dockerfile: Dockerfile.node
     container_name: 'web'
     environment:
-      - DATA_PATH=/shared/redview
+      - DATA_PATH=/clone/redview
     volumes:
-      - shared:/shared:rw
+      - ${VOLUME_SOURCE}:/data:ro
+      - clone:/clone:rw
     depends_on:
       - processor
     expose:
@@ -25,4 +26,4 @@ services:
       - "127.0.0.1:3000:3000"
 
 volumes:
-  shared:
+  clone:

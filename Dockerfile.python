@@ -7,4 +7,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 
 # Commande pour exécuter le script Python
-CMD python redview.py -s /data -p /shared/ -n redview -w
+CMD python redview.py -s /data -p /clone/ -n redview -w

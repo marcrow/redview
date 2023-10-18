@@ -8,6 +8,7 @@ from os import walk
 from os import makedirs
 from os import symlink
 from os import remove
+from os import readlink
 import time
 from shutil import rmtree
 import shutil
@@ -19,6 +20,7 @@ from src.utils import *
 from src.dir_processor import Directory_Processor
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from datetime import datetime, timedelta
 
 class Watcher:
 
@@ -26,6 +28,7 @@ class Watcher:
         self.redviewGenerator = redviewGenerator
         self.DIRECTORY_TO_WATCH = self.redviewGenerator.src
         self.observer = Observer()
+        
 
     def run(self):
         event_handler = Handler(self.redviewGenerator)
@@ -45,6 +48,10 @@ class Handler(FileSystemEventHandler):
         self.redviewGenerator = redviewGenerator
         self.ignore_types = [".swp",".swx", "swpx"]
         self.ignore_next = ""
+        #Use to avoid to generate multiple time the directory summary
+        # Also, because sometimes there is no modification event after a file creation.
+        self.last_summary_times = {}
+        self.summary_interval = timedelta(seconds=1)
 
     def process(self, event):
         """
@@ -71,13 +78,34 @@ class Handler(FileSystemEventHandler):
             # when directory is created
             if event.is_directory:
                 print("create dir "+dest_file)
-                makedirs(dest_file, exist_ok=True)
+                try:
+                    makedirs(dest_file, exist_ok=True)
+                except FileExistsError:
+                    return
+                except Exception as err:
+                    print(f"Unexpected {err=}, {type(err)=}")
+                    return
 #----- Add code here to generate empty summary in the new directory TBD ------
                 # targetsummary = clean_end_path(path.dirname(event.src_path))
             # when file is created
             else:
                 print("create symlink "+dest_file)
-                symlink(event.src_path,dest_file)
+                try:
+                    if path.exists(dest_file):
+                        rmtree(dest_file)
+                    target = event.src_path
+                    location = dest_file
+                    if path.islink(event.src_path):
+                        print("it is a link "+event.src_path)
+                        target = readlink(event.src_path)
+                        target = target.replace(self.redviewGenerator.src, self.redviewGenerator.ROOT_DEST)
+                    symlink(target,location)
+                except FileExistsError:
+                    print(dest_file +"FileExistsError -> skipped")
+                    return
+                except Exception as err:
+                    print(f"Unexpected {err=}, {type(err)=}")
+                    return 
         if event.event_type == "deleted" :
             # when directory is deleted
             if event.is_directory:
@@ -112,13 +140,22 @@ class Handler(FileSystemEventHandler):
             print("generate summary "+targetsummary+ " to "+targetDir)
             dir_processor = Directory_Processor(self.redviewGenerator.FORMAT, targetsummary, targetDir, self.redviewGenerator.ROOT_DEST, self.redviewGenerator.script_dir, self.redviewGenerator.dir_to_exclude, self.redviewGenerator.mainTags, self.redviewGenerator.real_path, self.redviewGenerator.exclude_hidden_dir)
             dir_processor.generate_dir_summary()
+            self.summary_event(event)
         # when files are modified, created and suppressed. 
         # If creation is excluded from the condition definition, this is because every file creation event is followed by a file modification event.
         # And we don't want to duplicate generate_me calls for nothing
-        if event.event_type != "created" and not event.is_directory :
+        elif not event.is_directory :
+            if event.event_type == "created":
+                last_modification = datetime.now() - self.last_summary_times.get(path, datetime.min)
+                if last_modification < self.summary_interval:
+                    print("the summary has already been generated "+ str(last_modification)+ " - "+targetsummary)
+                    return
+                else:
+                    print("we will generate a summary - "+targetsummary)
             print("generate summary "+targetsummary+ " to "+targetDir)
             dir_processor = Directory_Processor(self.redviewGenerator.FORMAT, targetsummary, targetDir, self.redviewGenerator.ROOT_DEST, self.redviewGenerator.script_dir, self.redviewGenerator.dir_to_exclude, self.redviewGenerator.mainTags, self.redviewGenerator.real_path, self.redviewGenerator.exclude_hidden_dir)
             dir_processor.generate_dir_summary()
+            self.summary_event(event)
 
         print("Event occurred: ", event.event_type, event.src_path, path.dirname(event.src_path))
 
@@ -127,9 +164,15 @@ class Handler(FileSystemEventHandler):
 
     def on_created(self, event):
         self.process(event)
+        path = event.src_path
+        if datetime.now() - self.last_summary_times.get(path, datetime.min) >= self.summary_interval:
+            
+            self.last_summary_times[path] = datetime.now()
 
     def on_deleted(self, event):
         self.process(event)
+        if path in self.last_summary_times:
+            del self.last_summary_times[path]
     
     def ignore_file(self,src_path):
         for ignore_type in self.ignore_types:
@@ -138,6 +181,10 @@ class Handler(FileSystemEventHandler):
                 self.ignore_next = directory_path
                 return True 
         return False
+    
+    def summary_event(self,event):
+        path = event.src_path
+        self.last_summary_times[path] = datetime.now()
 
 class RedviewGenerator:
     def __init__(self, FORMAT : str, src : str, dest : str, script_dir : str, dir_to_exclude : list, exclude_hidden_dir : bool, mainTags : list):

@@ -1,6 +1,7 @@
 import shutil
 import re
 from src.utils import *
+from os import symlink
 
 
 
@@ -268,13 +269,25 @@ class AsciidocWritter:
         phases = asciidoc_getter.extract_phase(asciidoc_text, file_content)
         add_phase_in_content(phases, file_content, cfile, content)
 
+
         try:
-            shutil.copy(asciidoc_getter.src+ocfile, self.dest+cfile)
-        except shutil.SameFileError:
-            print(self.dest+cfile+" File already exists")
-            pass
-        except Exception as e:
-            print("Issue ignored for "+self.dest+cfile + " : "+e)
-            pass
+            target = asciidoc_getter.src+ocfile
+            location = self.dest+cfile
+            symlink(target,location)
+        except FileExistsError:
+            print(location  +" FileExistsError -> skipped")
+            return
+        except Exception as err:
+            print(f"Unexpected {err=}, {type(err)=}")
+            return 
+
+        # try:
+        #     shutil.copy(asciidoc_getter.src+ocfile, self.dest+cfile)
+        # except shutil.SameFileError:
+        #     print(self.dest+cfile+" File already exists")
+        #     pass
+        # except Exception as e:
+        #     print("Issue ignored for "+self.dest+cfile + " : "+e)
+        #     pass
 
 

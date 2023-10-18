@@ -352,7 +352,8 @@ function extractFileType(filename) {
 
 function otherFilesResponder(req, res){
     const url = decodeURIComponent(req.url);
-    let filePath = path.join(process.cwd(), url);
+    let filePath = path.join(process.cwd(), "/data");
+    filePath = path.join(filePath, url);
     const type = extractFileType(filePath);
     if(isFileTypeSupported(type)){
         return generateSupportedContent(type, filePath,req, res)
@@ -370,7 +371,7 @@ const resources = (req,res) => {
   let filePath = path.join(process.cwd(), url);
   const is_valid = validateInput(filePath);
   if (!is_valid && extension != ".html") { //except html because markmap from adoc is generate in real-time
-      return res.status(404).send('File not found.'+extension);
+      return res.status(404).send('File not found.' + " - "+extension);
   }
   return res.sendFile(filePath);
 
@@ -391,13 +392,14 @@ const index = (req, res) => {
 
   const extension = path.extname(filePath);
   if (extension === "") {
-    console.log("empty");
+    console.log("empty : "+filePath);
     filePath = filePath + "summary.md";
   }
 
   const is_valid = validateInput(filePath);
   if (!is_valid && extension != ".html") { //except html because markmap from adoc is generate in real-time
-      return res.status(404).send('File not found.'+extension);
+      // return res.status(404).send('File not found.'+extension);
+      return res.status(404).send('File not found.' + " - "+extension);
   }
 
   if (path.extname(filePath) === ".md") {
