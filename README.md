@@ -1,7 +1,9 @@
 # redview
 View markdown file tree in a fancy web interface with two display modes : github like view and markmap mindmap to have an overview of your files.
 
-1 file -> 2 views + 1 directory -> 1 directory summary  :  
+1 file -> 2 views 
+1 directory -> 1 directory summary  :  
+
 1. Viewed in synthetic form, used as a list of tests to be carried out for pentesting.  
 2. Markdown / Asciidoc view, to have complete information.  
 3. Sometimes you have so much data that you're lost because you don't know what's in each file and where to find the information you're looking for. Redview can have the solution with directory summary.
@@ -44,7 +46,7 @@ When you run the python script a copy of the project is created in the directory
 
 __But why the new way is better? It seems more complex...__
 1. Because you don't have to install dependancies on your system.
-2. Because you can put your brain down and juste docker-compose.
+2. Because you can put your brain down and just docker-compose.
 3. And above all because the source directory is mounted read-only, which guarantees that the original content cannot be modified by redview in any way.
 
 ### How to start
