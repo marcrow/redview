@@ -2,6 +2,7 @@ import shutil
 import re
 from src.utils import *
 from os import symlink
+from os import path
 
 
 
@@ -273,7 +274,8 @@ class AsciidocWritter:
         try:
             target = asciidoc_getter.src+ocfile
             location = self.dest+cfile
-            symlink(target,location)
+            if not path.exists(target) :
+                symlink(target,location)
         except FileExistsError:
             print(location  +" FileExistsError -> skipped")
             return

@@ -3,6 +3,7 @@ import re
 from src.ascii_redview import AsciidocGetter, AsciidocWritter
 from src.utils import *
 from os import symlink
+from os import path
 
 
 # npm init -y; npm install express showdown fs path dotenv; node server.js
@@ -331,11 +332,12 @@ class MarkdownWritter:
         #         df.write(markdown_text)
         #         if self.FORMAT == "markmap":
         #             df.write("</script></div><span id='source' hidden='hidden'>.md</span></body></html>")
-
+        
         try:
             target = markdown_getter.src+ocfile
             location = self.dest+cfile
-            symlink(target,location)
+            if not path.exists(target) :
+                symlink(target,location)
         except FileExistsError:
             print(location  +" FileExistsError -> skipped")
             return
