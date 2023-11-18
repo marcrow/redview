@@ -38,10 +38,6 @@ View markdown file tree in a fancy web interface with two display modes : github
 You may found other use case of this project.
     
 ## How it works
-### Old way : 
-![Standard description](./images/standard_description.svg)  
-When you run the python script a copy of the project is created in the directory provide in argument (/tmp/redview by default). In this new directory, summary are added at the top of each files and directory summary are created for each directory. In addition html file are created for markmap preview.
-
 ### New way :
 ![Docker description](./images/docker_description.svg)  
 
@@ -50,20 +46,28 @@ __But why the new way is better? It seems more complex...__
 2. Because you can put your brain down and just docker-compose.
 3. And above all because the source directory is mounted read-only, which guarantees that the original content cannot be modified by redview in any way.
 
+### Old way : 
+![Standard description](./images/standard_description.svg)  
+When you run the python script a copy of the project is created in the directory provide in argument (/tmp/redview by default). In this new directory, summary are added at the top of each files and directory summary are created for each directory. In addition html file are created for markmap preview.
+
 ### How to start
 #### Requirement
-Old way :
+1. New way :
+
+Install docker et docker-compose
+
+2. Old way :
+
 Install nodejs, npm and python.
 ```bash
 sudo apt install node python3 npm
 ```
 I have to define depandency to install :/
 
-New way :
-Install docker et docker-compose
 
 #### Start
-New way :
+1. New way :
+
 Just use docker and docker-compose.  
 Put your notes in /tmp/notes on your system (not recommended) or modify the docker-compose.yml to change /tmp/note by your working directory.
 Before the first usage (internet connection required) : 
@@ -79,7 +83,7 @@ docker-compose up
 visit http://127.0.0.1:3000
 
 
-Old way :
+2. Old way :
 
 Redview work on every markdown directory tree. 
 In the redview directory :
