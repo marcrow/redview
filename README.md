@@ -69,6 +69,11 @@ I have to define depandency to install :/
 1. New way :
 
 Just use docker and docker-compose.  
+Create .env file in the redview root directory and add the following variable with the directory path to monitor.
+```bash
+VOLUME_SOURCE=/path/of/your/directory
+```
+
 Put your notes in /tmp/notes on your system (not recommended) or modify the docker-compose.yml to change /tmp/note by your working directory.
 Before the first usage (internet connection required) : 
 ```bash

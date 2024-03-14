@@ -199,15 +199,14 @@ class RedviewGenerator:
         destination_directory = self.ROOT_DEST
 
         # Copie les fichiers du répertoire source vers le répertoire de destination
+        #for root, dirs, files in walk(source_directory):
+        # Copie les répertoires du répertoire source vers le répertoire de destination
         for root, dirs, files in walk(source_directory):
             for file in files:
                 source_file = path.join(root, file)
                 destination_file = path.join(destination_directory, path.relpath(source_file, source_directory))
                 makedirs(path.dirname(destination_file), exist_ok=True)
                 shutil.copy2(source_file, destination_file)
-
-        # Copie les répertoires du répertoire source vers le répertoire de destination
-        for root, dirs, files in walk(source_directory):
             for dir in dirs:
                 source_dir = path.join(root, dir)
                 destination_dir = path.join(destination_directory, path.relpath(source_dir, source_directory))
@@ -240,6 +239,13 @@ class RedviewGenerator:
             # dir_markdown_writter = MarkdownWritter(markdown_writter.FORMAT, markdown_writter.dest+"/"+directory,  markdown_writter.mainTags)
             #generate_doc(dir_markdown_getter, markdown_writter)
             self.generate_doc()
+             # Copy all files in the current source directory to the destination directory
+            for file_name in listdir(self.src):
+                full_file_name = path.join(self.src, file_name)
+                if path.isfile(full_file_name):
+                    link_name = path.join(self.dest, file_name)
+                    if not path.exists(link_name):
+                        symlink(full_file_name, link_name)
             self.goto_parent_dir()
 
     """Used to copy all files in a dest directory, to limit web server configuration disclosure"""
