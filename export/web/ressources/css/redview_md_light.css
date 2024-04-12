@@ -3,6 +3,13 @@
 	padding: 0;
 	list-style-type: none;
 }
+
+@media print {
+  header {
+    display: none;
+  }
+}
+
 header{
     position: fixed; 
     top: 0; 
@@ -15,6 +22,8 @@ header{
     align-items: center;
     border-bottom: 1mm solid #358ccb;
 }
+
+
 /* ul{
 	display: flex;
 	width: 15%;

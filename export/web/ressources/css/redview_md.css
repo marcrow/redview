@@ -557,3 +557,15 @@ background-color: white;
 .sidebarblock .admonitionblock table td{
   border: none;
 }
+
+
+:not(.icon) > .title {
+  font-size: 24px;
+}
+
+
+:not(.icon) > .title::before {
+  content: "> ";
+  font-weight: bold;
+  color: #272822;
+}
