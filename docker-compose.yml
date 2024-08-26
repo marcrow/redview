@@ -21,9 +21,9 @@ services:
     depends_on:
       - processor
     expose:
-      - 3000
+      - ${PORT}
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:${PORT}:8000"
 
 volumes:
   clone:

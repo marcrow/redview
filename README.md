@@ -69,9 +69,10 @@ I have to define depandency to install :/
 1. New way :
 
 Just use docker and docker-compose.  
-Create .env file in the redview root directory and add the following variable with the directory path to monitor.
+Create .env file in the redview root directory and add the following variables with the directory path to monitor and the server port.
 ```bash
 VOLUME_SOURCE=/path/of/your/directory
+PORT=8000
 ```
 
 Put your notes in /tmp/notes on your system (not recommended) or modify the docker-compose.yml to change /tmp/note by your working directory.
@@ -85,7 +86,8 @@ Start the redview (no internet connection required):
 docker-compose up
 ```
 
-visit http://127.0.0.1:3000
+visit http://127.0.0.1:8000 
+If you used a different port number, replace 8000 by the value you written in the .env file.
 
 
 2. Old way :

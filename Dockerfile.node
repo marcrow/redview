@@ -6,9 +6,10 @@ COPY ./export/web ./
 # Install dependancy
 
 RUN npm init -y \
-&&  npm install express showdown fs path dotenv asciidoctor downdoc \
+&&  npm install express showdown fs path dotenv asciidoctor downdoc cheerio \
 && npm audit fix --force 
 
-EXPOSE 3000
+# Expose port from .env file ($PORT)
+EXPOSE $PORT
 
 CMD  ls /clone; node server.js
