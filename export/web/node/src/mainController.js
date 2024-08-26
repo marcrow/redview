@@ -26,10 +26,6 @@ function getCss() {
     return result;
   }
   
-  function encodeHTMLEntities(rawStr) {
-    return rawStr.replace(/[\u00A0-\u9999<>\&]/g, ((i) => `&#${i.charCodeAt(0)};`));
-  }
-  
   function escapeXSS(text) {
     var specialChar = /[ !@$%^&*()+=\[\]{};':"\\|<>\/?~]/;
     lines = text.split('\n');
@@ -41,9 +37,6 @@ function getCss() {
         if (specialChar.test(line)) {  // xss injection via language code bloc input
           line = "```text";
         }
-      }
-      if (!isCode) { // xss in text out of the code bloc
-        line = encodeHTMLEntities(line);
       }
       text = text + line + "\n";
     })
