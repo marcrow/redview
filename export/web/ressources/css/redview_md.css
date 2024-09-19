@@ -569,3 +569,17 @@ background-color: white;
   font-weight: bold;
   color: #272822;
 }
+
+.exampleblock{
+  background-color: #1e1f25;
+  opacity: .0.3;
+  margin: 50px;
+  padding: 30px;
+  border-radius: 10px;
+}
+
+.content > img{
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
