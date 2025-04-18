@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 # Test
-from os import mkdir
+from os import mkdir, makedirs
 from os import path
 from os import listdir
 import shutil
 import traceback
 import re
-from os.path import isfile, join
+from os.path import isfile, join, exists, isdir
 from src.utils import *
 from src.md_redview import MarkdownGetter, MarkdownWritter
 from src.ascii_redview import AsciidocGetter, AsciidocWritter
@@ -16,27 +16,56 @@ class Directory_Processor:
         self.script_dir = script_dir
         self.dir_to_exclude = dir_to_exclude
         self.FORMAT = FORMAT
-        self.src = src 
-        self.dest = dest
+        # Ensure src and dest paths are properly formatted (no trailing slash unless root)
+        self.src = clean_end_path(src) + '/' if not src.endswith('/') else src
+        self.dest = clean_end_path(dest) + '/' if not dest.endswith('/') else dest
         self.ROOT_DEST = ROOT_DEST
         self.exclude_hidden_dir = exclude_hidden_dir
         self.child_dir = []
-        try:
-            self.child_dir = self.get_directories()
-        except Exception:
-            traceback.print_exc()
-            pass 
+        
+        # Create destination directory if it doesn't exist
+        if not exists(self.dest):
+            try:
+                makedirs(self.dest, exist_ok=True)
+                print(f"Created directory: {self.dest}")
+            except Exception as e:
+                print(f"Error creating directory {self.dest}: {e}")
+        
+        # Only try to get directories if source path exists
+        if exists(self.src) and isdir(self.src):
+            try:
+                self.child_dir = self.get_directories()
+            except Exception as e:
+                print(f"Error getting directories from {self.src}: {e}")
+                traceback.print_exc()
+        else:
+            print(f"Warning: Source directory does not exist: {self.src}")
         
         self.mainTags = mainTags
         self.real_path = real_path
 
     
     def get_directories(self):
-        directories = [f for f in listdir(self.src) if not isfile(join(self.src, f)) and not f in self.dir_to_exclude]
-        if self.exclude_hidden_dir : 
-            return [item  for item in directories if not (item.startswith("."))]
-        else:
-            return [item  for item in directories]
+        # Check if source directory exists before trying to list it
+        if not exists(self.src) or not isdir(self.src):
+            print(f"Warning: Cannot list non-existent directory: {self.src}")
+            return []
+            
+        try:
+            directories = [f for f in listdir(self.src) if not isfile(join(self.src, f)) and not f in self.dir_to_exclude]
+            if self.exclude_hidden_dir : 
+                return [item for item in directories if not (item.startswith("."))]
+            else:
+                return [item for item in directories]
+        except FileNotFoundError:
+            print(f"Warning: Directory not found: {self.src}")
+            return []
+        except PermissionError:
+            print(f"Warning: Permission denied when accessing: {self.src}")
+            return []
+        except Exception as e:
+            print(f"Error listing directory {self.src}: {e}")
+            return []
 
     # Create subdirectories section based on child_dir from self().
     # Return text with links to all subdirectories
@@ -45,15 +74,18 @@ class Directory_Processor:
         for directory in self.child_dir:
             directory = directory.replace(self.ROOT_DEST,"")
             directory = directory.replace(" ","_")
-            if not path.exists(self.dest+directory):
+            target_dir = self.dest+directory
+            
+            if not path.exists(target_dir):
                 try:
-                    mkdir(self.dest+directory)
+                    makedirs(target_dir, exist_ok=True)
                 except FileExistsError:
-                    print("Directory already exist "+self.dest+directory)
+                    print(f"Directory already exists: {target_dir}")
                 except Exception as err:
-                    print(f"Unexpected {err=}, {type(err)=}")
-                    return
-            # title = "["+Directory+"]("+path+directory+"/)"
+                    print(f"Unexpected error creating directory {target_dir}: {err=}, {type(err)=}")
+                    continue
+            
+            # Format links based on output format
             if self.FORMAT == "markmap":
                 text = text + "- " + self.format_link(directory,"./"+directory+"/index.html")+"  \n"
             elif self.FORMAT == "md":
@@ -89,7 +121,22 @@ class Directory_Processor:
         return categories[number]
     
     def get_files(self):
-        return [f for f in listdir(self.src) if isfile(join(self.src, f))]
+        # Check if source directory exists before trying to list files
+        if not exists(self.src) or not isdir(self.src):
+            print(f"Warning: Cannot list files in non-existent directory: {self.src}")
+            return []
+            
+        try:
+            return [f for f in listdir(self.src) if isfile(join(self.src, f))]
+        except FileNotFoundError:
+            print(f"Warning: Directory not found when listing files: {self.src}")
+            return []
+        except PermissionError:
+            print(f"Warning: Permission denied when listing files in: {self.src}")
+            return []
+        except Exception as e:
+            print(f"Error listing files in directory {self.src}: {e}")
+            return []
 
 
     def format_link(self, text, destination, header = ""):
@@ -204,66 +251,106 @@ class Directory_Processor:
         text_sub_dir = self.create_sub_dir_section()
         text = "" 
         if self.FORMAT == "markmap":
-            with open(self.real_path+"/export/web/ressources/template.html", "r") as tf: 
-                for line in tf:          
-                    text = text + line
-        fileName = self.dest.split("/")
-        text =text + "# "+self.dest.split("/")[-2].capitalize()+"\n"           
-        #Lien vers les réperoires enfants
+            template_path = self.real_path+"/export/web/ressources/template.html"
+            if exists(template_path):
+                try:
+                    with open(template_path, "r") as tf: 
+                        for line in tf:          
+                            text = text + line
+                except Exception as e:
+                    print(f"Error reading template file {template_path}: {e}")
+            else:
+                print(f"Warning: Template file not found: {template_path}")
+                
+        # Get directory name for title
+        dir_parts = self.dest.rstrip('/').split("/")
+        dir_name = dir_parts[-1] if dir_parts else "Root"
+        text = text + "# " + dir_name.capitalize() + "\n"
+                   
+        # Links to child directories
         if len(text_sub_dir) != 0:
             text = text + "\n## Subcategories \n"
             text = text + text_sub_dir
+            
         if self.FORMAT != "markmap":
             text = text + "# Categories :  \n"
-        text = self.content_struct_to_text(text,content,self.dest)
+            
+        text = self.content_struct_to_text(text, content, self.dest)
+        
         if self.FORMAT != "markmap":
             text = text + self.add_associated_files(files)
+            
+        # Determine summary filename based on format
         summaryFilename = ""
         if self.FORMAT == "md" or self.FORMAT == "web":
             summaryFilename = "summary.md"
         elif self.FORMAT == "markmap":
             summaryFilename = "index.html"
         else:
-            if self.dest[-1]=="/":
-                summaryFilename = self.dest.split("/")[-2] + ".md"
+            if self.dest.endswith('/'):
+                dir_parts = self.dest.rstrip('/').split("/")
+                summaryFilename = dir_parts[-1] + ".md" if dir_parts else "index.md"
             else:
-                summaryFilename = self.dest.split("/")[-1] + ".md"
-        with open(self.dest+summaryFilename,'w') as wfile:
-            wfile.write(text)
+                summaryFilename = path.basename(self.dest) + ".md"
+                
+        # Write summary file
+        try:
+            with open(self.dest+summaryFilename, 'w') as wfile:
+                wfile.write(text)
+        except Exception as e:
+            print(f"Error writing summary file {self.dest+summaryFilename}: {e}")
 
 
     def generate_dir_summary(self):
-        files = self.get_files()
-        content=self.get_content_struct() 
-        file_list = []
-        #Copy every files + load titles + add md toc
-        for cfile in files :
-            if cfile[-3:] == ".md":
-                markdown_getter = MarkdownGetter(self.FORMAT, self.src , self.dir_to_exclude , self.mainTags, self.real_path) 
-                markdown_writter = MarkdownWritter(self.FORMAT, self.dest, self.ROOT_DEST,  self.mainTags, self.real_path)
-                markdown_writter.process_markdown_file(cfile, content, markdown_getter)
-            elif cfile[-5:] == ".adoc" and cfile.lower() != "summary.adoc":
-                asciidocGetter = AsciidocGetter(self.FORMAT, self.src , self.dir_to_exclude , self.mainTags, self.real_path)
-                asciidocWritter = AsciidocWritter(self.FORMAT, self.dest, self.ROOT_DEST,  self.mainTags, self.real_path)
-                asciidocWritter.process_asciidoc_file(cfile, content, asciidocGetter)
-            else:
-                dest = self.dest+cfile.replace(" ","-")
-                if not path.isfile(dest):
-                    is_ignored = False
-                    for ignnore_type in [".swp",".swx", "swpx"]:
-                        if dest.endswith(ignnore_type):
-                            is_ignored=True
-                    if not is_ignored:        
-                        shutil.copy(self.src+cfile, dest)
-            file_list.append(cfile)
-        if self.FORMAT == "web":
-            self.FORMAT="markmap"
-            self.generate_dir_summary_content(content, files)
-            self.FORMAT="md"
-            self.generate_dir_summary_content(content, files)
-            self.FORMAT = "web"
-        else:
-            self.generate_dir_summary_content(content, files)
+        # Only proceed if source directory exists
+        if not exists(self.src) or not isdir(self.src):
+            print(f"Warning: Cannot generate summary for non-existent directory: {self.src}")
+            return
             
-        
-        
+        try:
+            files = self.get_files()
+            content = self.get_content_struct() 
+            file_list = []
+            
+            # Process each file
+            for cfile in files:
+                try:
+                    if cfile[-3:] == ".md":
+                        markdown_getter = MarkdownGetter(self.FORMAT, self.src, self.dir_to_exclude, self.mainTags, self.real_path) 
+                        markdown_writter = MarkdownWritter(self.FORMAT, self.dest, self.ROOT_DEST, self.mainTags, self.real_path)
+                        markdown_writter.process_markdown_file(cfile, content, markdown_getter)
+                    elif cfile[-5:] == ".adoc" and cfile.lower() != "summary.adoc":
+                        asciidocGetter = AsciidocGetter(self.FORMAT, self.src, self.dir_to_exclude, self.mainTags, self.real_path)
+                        asciidocWritter = AsciidocWritter(self.FORMAT, self.dest, self.ROOT_DEST, self.mainTags, self.real_path)
+                        asciidocWritter.process_asciidoc_file(cfile, content, asciidocGetter)
+                    else:
+                        dest = self.dest+cfile.replace(" ","-")
+                        if not path.isfile(dest):
+                            is_ignored = False
+                            for ignnore_type in [".swp",".swx", "swpx"]:
+                                if dest.endswith(ignnore_type):
+                                    is_ignored=True
+                            if not is_ignored:
+                                source_file = join(self.src, cfile)
+                                if exists(source_file) and isfile(source_file):
+                                    shutil.copy(source_file, dest)
+                                else:
+                                    print(f"Warning: Source file does not exist: {source_file}")
+                    file_list.append(cfile)
+                except Exception as e:
+                    print(f"Error processing file {cfile}: {e}")
+                    continue
+                    
+            # Generate summary content based on format
+            if self.FORMAT == "web":
+                self.FORMAT = "markmap"
+                self.generate_dir_summary_content(content, files)
+                self.FORMAT = "md"
+                self.generate_dir_summary_content(content, files)
+                self.FORMAT = "web"
+            else:
+                self.generate_dir_summary_content(content, files)
+                
+        except Exception as e:
+            print(f"Error generating directory summary for {self.src}: {e}")
+            traceback.print_exc()

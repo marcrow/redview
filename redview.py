@@ -1,14 +1,8 @@
 #!/usr/bin/python3
 # Test
-from os import mkdir
-from os import rmdir
-from os import path
-from os import listdir
-from os import walk
-from os import makedirs
-from os import symlink
-from os import remove
-from os import readlink
+from os import mkdir, rmdir, path, listdir, walk, makedirs, symlink, remove, readlink
+from os.path import exists, isdir, isfile, join, abspath
+import traceback
 import time
 from shutil import rmtree
 import shutil
@@ -64,11 +58,17 @@ class Handler(FileSystemEventHandler):
         if not self.is_path_valid(event.src_path):
             print(f"Warning: Path {event.src_path} is outside the watched directory {self.DIRECTORY_TO_WATCH}")
             return 0
+        
+        # Handle case where path has a trailing slash but is actually a file
+        src_path = event.src_path
+        if src_path.endswith('/') and exists(src_path.rstrip('/')) and not isdir(src_path.rstrip('/')):
+            src_path = src_path.rstrip('/')
+            print(f"Corrected path (removed trailing slash from file): {src_path}")
             
-        dest_file = event.src_path.replace(self.redviewGenerator.src, self.redviewGenerator.ROOT_DEST)
+        dest_file = src_path.replace(self.redviewGenerator.src, self.redviewGenerator.ROOT_DEST)
         dest_directory = path.dirname(dest_file)
         dest_directory = clean_end_path(dest_directory)
-        targetsummary = clean_end_path(path.dirname(event.src_path))
+        targetsummary = clean_end_path(path.dirname(src_path))
 
         if event.event_type == "deleted":
             dest_file = dest_directory
@@ -80,6 +80,17 @@ class Handler(FileSystemEventHandler):
         if not targetsummary.startswith(self.DIRECTORY_TO_WATCH):
             print(f"Warning: Target summary path {targetsummary} is outside the watched directory {self.DIRECTORY_TO_WATCH}")
             return 0
+        
+        # Check if target summary is a directory
+        if not exists(targetsummary) or not isdir(targetsummary):
+            # Try to get the parent directory if it's a file
+            parent_dir = path.dirname(targetsummary.rstrip('/'))
+            if exists(parent_dir) and isdir(parent_dir):
+                targetsummary = clean_end_path(parent_dir)
+                print(f"Using parent directory for summary: {targetsummary}")
+            else:
+                print(f"Warning: Cannot find a valid directory for summary: {targetsummary}")
+                return 0
                  
         # Generate directory summary
         print("generate summary "+targetsummary+ " to "+dest_directory)
@@ -214,8 +225,14 @@ class Handler(FileSystemEventHandler):
             print(f"Warning: Path {event.src_path} is outside the watched directory {self.DIRECTORY_TO_WATCH}")
             return 0
         
+        # Handle case where path has a trailing slash but is actually a file
+        src_path = event.src_path
+        if src_path.endswith('/') and exists(src_path.rstrip('/')) and not isdir(src_path.rstrip('/')):
+            src_path = src_path.rstrip('/')
+            print(f"Corrected path (removed trailing slash from file): {src_path}")
+        
         # Get the parent directory of the created file/directory
-        parent_dir = clean_end_path(path.dirname(event.src_path))
+        parent_dir = clean_end_path(path.dirname(src_path))
         
         # Ensure the parent directory is within the watched directory
         if not parent_dir.startswith(self.DIRECTORY_TO_WATCH):
@@ -276,8 +293,14 @@ class Handler(FileSystemEventHandler):
             print(f"Warning: Path {event.src_path} is outside the watched directory {self.DIRECTORY_TO_WATCH}")
             return 0
         
+        # Handle case where path has a trailing slash but is actually a file
+        src_path = event.src_path
+        if src_path.endswith('/') and exists(src_path.rstrip('/')) and not isdir(src_path.rstrip('/')):
+            src_path = src_path.rstrip('/')
+            print(f"Corrected path (removed trailing slash from file): {src_path}")
+        
         # Get the parent directory of the deleted file/directory
-        parent_dir = clean_end_path(path.dirname(event.src_path))
+        parent_dir = clean_end_path(path.dirname(src_path))
         
         # Ensure the parent directory is within the watched directory
         if not parent_dir.startswith(self.DIRECTORY_TO_WATCH):
@@ -381,32 +404,84 @@ class RedviewGenerator:
 
 
     def generate_doc(self):
-        dir_processor = Directory_Processor(self.FORMAT, self.src, self.dest, self.ROOT_DEST, self.script_dir ,self.dir_to_exclude, self.mainTags, self.real_path, self.exclude_hidden_dir)
-        dir_processor.generate_dir_summary()
-        
-        # Create symlinks for files in the current (root) directory
-        for file_name in listdir(self.src):
-            full_file_name = path.join(self.src, file_name)
-            if path.isfile(full_file_name):
-                link_name = path.join(self.dest, file_name)
-                if not path.exists(link_name):
-                    symlink(full_file_name, link_name)
-        
-        for directory in dir_processor.child_dir:           
-            self.src = clean_end_path(self.src+"/"+directory)
-            self.dest = clean_end_path(self.dest+"/"+directory.replace(" ","_"))
-            # dir_markdown_getter = MarkdownGetter(markdown_getter.FORMAT, markdown_getter.src+"/"+directory, markdown_getter.dest+"/"+directory, markdown_getter.dir_to_exclude, markdown_getter.mainTags) 
-            # dir_markdown_writter = MarkdownWritter(markdown_writter.FORMAT, markdown_writter.dest+"/"+directory,  markdown_writter.mainTags)
-            #generate_doc(dir_markdown_getter, markdown_writter)
-            self.generate_doc()
-             # Copy all files in the current source directory to the destination directory
+        """
+        Generate documentation by recursively processing directories and files.
+        Handles special cases like broken symlinks and files with trailing slashes.
+        """
+        # Check if source directory exists and is actually a directory
+        if not exists(self.src):
+            print(f"Warning: Source path does not exist: {self.src}")
+            return
+            
+        # Handle case where src has a trailing slash but is actually a file or broken symlink
+        if self.src.endswith('/') and exists(self.src.rstrip('/')) and not isdir(self.src.rstrip('/')):
+            # Remove trailing slash for files
+            self.src = self.src.rstrip('/')
+            print(f"Corrected path (removed trailing slash from file): {self.src}")
+            
+        # Now check if it's a directory after potential correction
+        if not isdir(self.src):
+            print(f"Warning: Source path is not a directory: {self.src}")
+            return
+            
+        try:
+            # Process the current directory
+            dir_processor = Directory_Processor(
+                self.FORMAT, 
+                self.src, 
+                self.dest, 
+                self.ROOT_DEST, 
+                self.script_dir, 
+                self.dir_to_exclude, 
+                self.mainTags, 
+                self.real_path, 
+                self.exclude_hidden_dir
+            )
+            dir_processor.generate_dir_summary()
+            
+            # Create symlinks for files in the current (root) directory
             for file_name in listdir(self.src):
                 full_file_name = path.join(self.src, file_name)
-                if path.isfile(full_file_name):
+                if isfile(full_file_name):
                     link_name = path.join(self.dest, file_name)
-                    if not path.exists(link_name):
-                        symlink(full_file_name, link_name)
-            self.goto_parent_dir()
+                    if not exists(link_name):
+                        try:
+                            symlink(full_file_name, link_name)
+                        except OSError as e:
+                            print(f"Warning: Could not create symlink for {full_file_name}: {e}")
+            
+            # Process subdirectories
+            for directory in dir_processor.child_dir:
+                src_subdir = clean_end_path(self.src + "/" + directory)
+                dest_subdir = clean_end_path(self.dest + "/" + directory.replace(" ", "_"))
+                
+                # Skip if source subdirectory doesn't exist or isn't a directory
+                if not exists(src_subdir) or not isdir(src_subdir):
+                    print(f"Warning: Skipping invalid directory: {src_subdir}")
+                    continue
+                
+                # Save current paths
+                original_src = self.src
+                original_dest = self.dest
+                
+                # Set new paths for recursive call
+                self.src = src_subdir
+                self.dest = dest_subdir
+                
+                # Recursively process subdirectory
+                self.generate_doc()
+                
+                # Restore original paths
+                self.src = original_src
+                self.dest = original_dest
+                
+        except FileNotFoundError as e:
+            print(f"Error: Directory not found: {self.src} - {e}")
+        except PermissionError as e:
+            print(f"Error: Permission denied when accessing: {self.src} - {e}")
+        except Exception as e:
+            print(f"Error generating documentation for {self.src}: {e}")
+            traceback.print_exc()
 
     """Used to copy all files in a dest directory, to limit web server configuration disclosure"""
     def dest_to_data(self):
@@ -439,7 +514,7 @@ def main():
     parser = argparse.ArgumentParser(add_help=False,prog='redview.py',
       formatter_class=argparse.RawDescriptionHelpFormatter,
       description=textwrap.dedent(redview_title()))
-    parser.add_argument("--source", "-s", help="Source directory wich contains original md files", required=True)             
+    parser.add_argument("--source", "-s", help="Source directory which contains original md files", required=True)             
     parser.add_argument("--name", "-n", help="Nom du projet, par défaut redview",  default="redview", required=False)
     parser.add_argument("--path", "-p", help="Chemin destination de des notes formatées, par défaut /tmp/",  default="/tmp/", required=False)
     parser.add_argument("--format", "-f", help="Format de sortie optimisée pour : web, obsidian et markmap", choices=["web","md","obsidian","markmap"], default="web")
@@ -469,8 +544,18 @@ def main():
 
     src = args.source
     src = clean_end_path(src)
-    if not path.exists(src):
+    
+    # Handle case where src has a trailing slash but is actually a file
+    if src.endswith('/') and exists(src.rstrip('/')) and not isdir(src.rstrip('/')):
+        src = src.rstrip('/')
+        print(f"Corrected source path (removed trailing slash from file): {src}")
+    
+    if not exists(src):
         print("error: Source directory "+src+" not found")
+        exit()
+    
+    if not isdir(src):
+        print("error: Source path "+src+" is not a directory")
         exit()
 
     if not path.exists(dest_path):
