@@ -216,7 +216,7 @@ class Directory_Processor:
             text = text + "\n## Subcategories \n"
             text = text + text_sub_dir
         if self.FORMAT != "markmap":
-            text = text + "# Categories3 :  \n"
+            text = text + "# Categories :  \n"
         text = self.content_struct_to_text(text,content,self.dest)
         if self.FORMAT != "markmap":
             text = text + self.add_associated_files(files)
