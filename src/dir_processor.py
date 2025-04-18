@@ -147,8 +147,6 @@ class Directory_Processor:
                     h= ""
                     if level == 1:
                         h = "### "+icon_title
-                        
-                        print(f'dpath : {dpath}')
                         if dpath.endswith(".md") and "summary.md" not in dpath.lower():
                             title = self.format_filename_to_title(dpath) + " - " + k
                             text = text + h + self.format_link(title, dpath, k) + "  \n"
