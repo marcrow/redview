@@ -272,7 +272,7 @@ function asciiToMarkmap(filePath, res){
 function validateInput(filePath) {
 doesExist = fs.existsSync(filePath);
 if (doesExist) {
-    if (!path.resolve(filePath).startsWith(process.cwd())) {
+    if (!path.resolve(filePath).startsWith('/clone/redview/data')) {
     console.error("lfi attempt via " + filePath);
     return false;
     }
@@ -345,8 +345,9 @@ function extractFileType(filename) {
 
 function otherFilesResponder(req, res){
     const url = decodeURIComponent(req.url);
-    let filePath = path.join(process.cwd(), "/data");
-    filePath = path.join(filePath, url);
+    // Remove leading slashes to avoid path.join resetting to root
+    const safeUrl = url.replace(/^\/+/, '');
+    let filePath = path.join("/clone/redview/data", safeUrl);
     const type = extractFileType(filePath);
     if(isFileTypeSupported(type)){
         return generateSupportedContent(type, filePath,req, res)
@@ -361,32 +362,56 @@ function otherFilesResponder(req, res){
 
 const resources = (req,res) => {
   const url = decodeURIComponent(req.url);
-  let filePath = path.join(process.cwd(), url);
+  // Remove leading slashes to avoid path.join resetting to root
+  const safeUrl = url.replace(/^\/+/, '');
+  let filePath = path.join("/clone/redview/data", safeUrl);
+  const extension = path.extname(filePath);
   const is_valid = validateInput(filePath);
   if (!is_valid && extension != ".html") { //except html because markmap from adoc is generate in real-time
       return res.status(404).send('File not found.' + " - "+extension);
   }
   return res.sendFile(filePath);
-
 };
 
 const index = (req, res) => {
   const url = decodeURIComponent(req.url);
-  let filePath = path.join(process.cwd(), "/data");
-  filePath = path.join(filePath, url);
-
-  // if (!is_valid) {
-  //   const alternateFilePath = filePath.replace('.html', '.adoc'); 
-  //   if (!validateInput(alternateFilePath)){
-  //     console.log("fichier invalide :(");
-  //     return res.status(404).send('File not found.');
-  //   }
-  // }
+  // Remove leading slashes to avoid path.join resetting to root
+  const safeUrl = url.replace(/^\/+/, '');
+  let filePath = path.join("/clone/redview/data", safeUrl);
 
   const extension = path.extname(filePath);
+
   if (extension === "") {
-    console.log("empty : "+filePath);
-    filePath = filePath + "summary.md";
+    // Try to resolve as <dir>/<name>.adoc or <dir>/<name>.md
+    let dirPath = path.dirname(filePath);
+    let baseName = path.basename(filePath);
+
+    // If the path is a directory, use it directly
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+      dirPath = filePath;
+      baseName = "";
+    }
+
+    let candidateFiles = [];
+    if (baseName) {
+      candidateFiles.push(path.join(dirPath, baseName + ".adoc"));
+      candidateFiles.push(path.join(dirPath, baseName + ".md"));
+    }
+    candidateFiles.push(path.join(dirPath, "summary.md"));
+    candidateFiles.push(path.join(dirPath, "summary.adoc"));
+
+    let foundFile = null;
+    for (const candidate of candidateFiles) {
+      if (fs.existsSync(candidate)) {
+        foundFile = candidate;
+        break;
+      }
+    }
+
+    if (!foundFile) {
+      return res.status(404).send('File not found. -');
+    }
+    filePath = foundFile;
   }
 
   const is_valid = validateInput(filePath);

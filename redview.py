@@ -232,6 +232,15 @@ class RedviewGenerator:
     def generate_doc(self):
         dir_processor = Directory_Processor(self.FORMAT, self.src, self.dest, self.ROOT_DEST, self.script_dir ,self.dir_to_exclude, self.mainTags, self.real_path, self.exclude_hidden_dir)
         dir_processor.generate_dir_summary()
+        
+        # Create symlinks for files in the current (root) directory
+        for file_name in listdir(self.src):
+            full_file_name = path.join(self.src, file_name)
+            if path.isfile(full_file_name):
+                link_name = path.join(self.dest, file_name)
+                if not path.exists(link_name):
+                    symlink(full_file_name, link_name)
+        
         for directory in dir_processor.child_dir:
             self.src = clean_end_path(self.src+"/"+directory)
             self.dest = clean_end_path(self.dest+"/"+directory.replace(" ","_"))
