@@ -22,7 +22,7 @@ View markdown file tree in a fancy web interface with two display modes : github
 
 + Configuraiton via yaml and .env file 😊
 
-## When use Redview
+## When to use Redview
 1. Preview knowledge notes
   - Stay compatible with all markdown based tools used to take note (gitbook, github...)
   - Take your note from everywhere, on the web, in vs code, in a notepad or in vi.
@@ -42,8 +42,8 @@ You may found other use case of this project.
 ![Docker description](./images/docker_description.svg)  
 
 __But why the new way is better? It seems more complex...__
-1. Because you don't have to install dependancies on your system.
-2. Because you can put your brain down and just docker-compose.
+1. Because you don't have to install dependancy on your system.
+2. Because you can put your brain down and just docker compose.
 3. And above all because the source directory is mounted read-only, which guarantees that the original content cannot be modified by redview in any way.
 
 ### Old way : 
@@ -54,7 +54,7 @@ When you run the python script a copy of the project is created in the directory
 #### Requirement
 1. New way :
 
-Install docker et docker-compose
+docker and docker compose
 
 2. Old way :
 
@@ -71,19 +71,19 @@ I have to define depandency to install :/
 Just use docker and docker-compose.  
 Create .env file in the redview root directory and add the following variables with the directory path to monitor and the server port.
 ```bash
-VOLUME_SOURCE=/path/of/your/directory
+VOLUME_SOURCE=/path/to/notes/directory
 PORT=8000
 ```
 
 Put your notes in /tmp/notes on your system (not recommended) or modify the docker-compose.yml to change /tmp/note by your working directory.
 Before the first usage (internet connection required) : 
 ```bash
-docker-compose build
+docker compose build
 ```
 
 Start the redview (no internet connection required):
 ```bash
-docker-compose up
+docker compose up
 ```
 
 visit http://127.0.0.1:8000 
