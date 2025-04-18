@@ -28,15 +28,14 @@ def add_phase_in_content(phases, files_content, cfile, content):
             continue
         
         for title in titles:
-            title1 = {}
-            for index,  tmp_title in enumerate(files_content): #retrieve level1 title  
-                if list(tmp_title.keys())[0].strip() == title.strip():
-                    title1 = files_content[index]
-                    continue
-            if cfile not in content[tag]:
-                content[tag][cfile]=title1
-            else:
-                content[tag][cfile].update(title1)
+            # Loop over all top-level entries in files_content
+            for title1 in files_content:
+                key = list(title1.keys())[0]
+                if key.strip() == title.strip():
+                    if cfile not in content[tag]:
+                        content[tag][cfile] = title1.copy()
+                    else:
+                        content[tag][cfile].update(title1)
 
 
 

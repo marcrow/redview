@@ -198,16 +198,25 @@ class MarkdownGetter:
         keyword = "#"+self.get_category_keyword()
         lines = markdown_text.split('\n')
         last_tags = []
+        level1_titles = set()
+        
         for index, line in enumerate(lines):
-            previous_line = lines[index - 1].strip().lower()
+            previous_line = lines[index - 1].strip().lower() if index > 0 else ""
             match = re.match(r'^(#+)\s+(.*)', previous_line)
             if match:
                 current_title = match.group(2)
+                level = len(match.group(1))
+                
                 for title1 in titles: #######! retourne que le premier élément 
                     for title in title1.keys():
                         if title.lower() == current_title.lower():
                             current_title = title
                             continue
+                
+                # Track all level 1 titles
+                if level == 1:
+                    level1_titles.add(current_title)
+                
                 if keyword in line.lower() or keyword+"s" in line.lower():
                     tags = self.get_title_phase(line)
                     last_tags = tags
@@ -226,6 +235,20 @@ class MarkdownGetter:
                             if phase.get(tag) is None:
                                 phase[tag]=[]
                             phase[tag].append(current_title)
+        
+        # Ensure all level 1 titles without explicit tags are in phase["-1"]
+        if phase.get("-1") is None:
+            phase["-1"] = []
+            
+        # Find all level 1 titles that aren't in any phase yet
+        all_tagged_titles = set()
+        for tag_titles in phase.values():
+            all_tagged_titles.update(tag_titles)
+            
+        for title in level1_titles:
+            if title not in all_tagged_titles:
+                phase["-1"].append(title)
+                
         return phase
 
 

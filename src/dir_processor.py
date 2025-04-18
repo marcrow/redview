@@ -5,6 +5,7 @@ from os import path
 from os import listdir
 import shutil
 import traceback
+import re
 from os.path import isfile, join
 from src.utils import *
 from src.md_redview import MarkdownGetter, MarkdownWritter
@@ -108,7 +109,16 @@ class Directory_Processor:
             else:
                 return "["+text.replace("\n","")+"]("+destination.replace("\n","")+"#"+"".join(header.lower().rstrip().lstrip())+")  "
 
-
+    def format_filename_to_title(self, text):
+        # handle path with /
+        if "/" in text:
+            text = text.split("/")[-1]
+        if "." in text :
+            text = text.split(".")[0]
+        text = text.replace("_"," ")
+        text = text.replace("\n"," ")
+        return text
+    
     
     def content_struct_to_text(self, text, content, dpath, level=0):
         # print(content)
@@ -137,11 +147,18 @@ class Directory_Processor:
                     h= ""
                     if level == 1:
                         h = "### "+icon_title
+                        
+                        print(f'dpath : {dpath}')
+                        if dpath.endswith(".md") and "summary.md" not in dpath.lower():
+                            title = self.format_filename_to_title(dpath) + " - " + k
+                            text = text + h + self.format_link(title, dpath, k) + "  \n"
+                        else:
+                            text= text +h+ self.format_link(k,dpath,k) +"  \n"
                     else:
                         h = "\t"*tlevel
                         h = h +"- "+icon_chapter
-                    
-                    text= text +h+ self.format_link(k,dpath,k) +"  \n"
+                        text= text +h+ self.format_link(k,dpath,k) +"  \n"
+
                     for elt in v:
                         text = self.content_struct_to_text(text, elt,  dpath, level+1)
         else: 
@@ -199,7 +216,7 @@ class Directory_Processor:
             text = text + "\n## Subcategories \n"
             text = text + text_sub_dir
         if self.FORMAT != "markmap":
-            text = text + "# Categories :  \n"
+            text = text + "# Categories3 :  \n"
         text = self.content_struct_to_text(text,content,self.dest)
         if self.FORMAT != "markmap":
             text = text + self.add_associated_files(files)
